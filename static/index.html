@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo de Flashcards - Dashboard do Aluno</title>
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for performance graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Custom font and minor adjustments */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #f1f5f9; /* slate-100 */
+    }
+    /* Custom styles for buttons and interactive elements */
+    .btn {
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .opcao-btn:not(:disabled):hover {
+        background-color: #3b82f6; /* blue-500 */
+    }
+    .opcao-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    /* Animation for elements appearing */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<div id="main-container" class="w-full max-w-4xl mx-auto">
+
+  <!-- Waiting Screen -->
+  <div id="aguarde" class="text-center bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
+    <h2 class="text-2xl font-bold text-slate-800 mb-4">Aguardando o instrutor liberar o jogo…</h2>
+    <p class="text-slate-600 mb-6">Fique atento, o botão de início aparecerá assim que o professor liberar!</p>
+    <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="inicio" class="bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
+    <h2 class="text-3xl font-bold text-slate-800 text-center mb-2">Jogo de Flashcards</h2>
+    <p class="text-center text-slate-500 mb-8">Inteligência Artificial</p>
+    <div class="space-y-4">
+      <div>
+        <label for="usuario" class="block text-sm font-medium text-slate-700 mb-1">Digite seu nome:</label>
+        <input type="text" id="usuario" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome aqui">
+      </div>
+      <div>
+        <label for="numPerguntas" class="block text-sm font-medium text-slate-700 mb-1">Quantidade de perguntas:</label>
+        <input type="number" id="numPerguntas" class="w-full px-4 py-2 border bg-slate-100 border-slate-300 rounded-lg" disabled>
+      </div>
+    </div>
+    <button class="btn w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700" onclick="comecar()">Começar Jogo</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="jogo" class="fade-in" style="display:none;">
+    <!-- Header with Progress and Timer -->
+    <div class="bg-white p-4 rounded-t-2xl shadow-md mb-4 flex flex-col sm:flex-row sm:justify-between items-center gap-4">
+        <div class="w-full sm:w-auto">
+            <p class="text-lg font-semibold text-slate-700 text-center sm:text-left">
+                Pergunta <span id="pergunta-atual"></span> de <span id="total-perguntas"></span>
+            </p>
+            <div class="w-full bg-slate-200 rounded-full h-4 mt-2">
+                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-out"></div>
+            </div>
+        </div>
+        <div class="mt-2 sm:mt-0">
+            <span class="font-mono text-2xl font-bold text-blue-700 flex items-center gap-2">
+                <span>⏰</span>
+                <span id="timer-aluno">--:--</span>
+            </span>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Main Question Area -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+            <div id="pergunta" class="text-xl font-semibold text-slate-800 mb-6 min-h-[60px]"></div>
+            <div id="opcoes" class="space-y-3"></div>
+            <div id="feedback" class="mt-6 text-center">
+                <p id="resultado" class="text-2xl font-bold"></p>
+                <p id="explicacao" class="text-slate-600 mt-2"></p>
+            </div>
+            <button id="proxima" class="btn w-full mt-6 bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600" style="display:none" onclick="proxima()">Próxima</button>
+        </div>
+
+        <!-- Dashboard Panel -->
+        <div class="space-y-4">
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="font-bold text-lg text-slate-800 mb-3 text-center">Meu Desempenho</h3>
+                <canvas id="performanceChart"></canvas>
+                <p class="text-center mt-4 text-2xl font-bold text-slate-700">Score: <span id="pontuacao-atual">0</span></p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="font-bold text-lg text-slate-800 mb-4 text-center">Ranking da Rodada</h3>
+                <ul id="ranking-list" class="space-y-2">
+                    <!-- Ranking items will be injected here by JS -->
+                    <li class="text-center text-slate-500">Carregando ranking...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Final Screen -->
+  <div id="final" class="text-center bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
+    <h2 class="text-3xl font-bold text-slate-800 mb-4">Você completou esta rodada!</h2>
+    <div id="scoreFinal" class="text-xl text-slate-600 mb-6"></div>
+    <p class="text-slate-500">Aguarde o instrutor liberar uma nova rodada para jogar novamente.</p>
+    <button class="btn w-full max-w-xs mx-auto mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700" onclick="window.location.reload()">Voltar ao Início</button>
+  </div>
+
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+let perguntas = [], atual = 0, pontuacao = 0, usuario = '';
+let acertos = 0, erros = 0;
+let performanceChart = null;
+let rankingInterval = null;
+let timerAluno = null; // Timer interval variable
+
+// --- Timer Functions ---
+function startTimerAluno() {
+    if (timerAluno) clearInterval(timerAluno);
+    updateTimerAluno(); // Call immediately to avoid 1s delay
+    timerAluno = setInterval(updateTimerAluno, 1000);
+}
+
+function updateTimerAluno() {
+    fetch('/api/status_jogo').then(r => r.json()).then(st => {
+        if (st.estado === "iniciado" && st.tempo_restante !== undefined) {
+            const tempoRestante = st.tempo_restante;
+            const min = String(Math.floor(tempoRestante / 60)).padStart(2, '0');
+            const sec = String(tempoRestante % 60).padStart(2, '0');
+            document.getElementById('timer-aluno').innerText = `${min}:${sec}`;
+            
+            if (tempoRestante <= 0) {
+                clearInterval(timerAluno);
+                bloquearJogoPorTempo();
+            }
+        } else {
+            // If game is no longer 'iniciado' or timer data is missing, stop the timer.
+            clearInterval(timerAluno);
+        }
+    }).catch(err => {
+        console.error("Error fetching timer status:", err);
+        clearInterval(timerAluno); // Stop timer on error
+    });
+}
+
+function bloquearJogoPorTempo() {
+    // Disable all interactive elements
+    const allButtons = document.querySelectorAll('#jogo button');
+    allButtons.forEach(btn => btn.disabled = true);
+    const allInputs = document.querySelectorAll('#jogo input, #jogo select');
+    allInputs.forEach(input => input.disabled = true);
+
+    document.getElementById('opcoes').innerHTML = ''; // Clear options
+    document.getElementById('resultado').innerText = '';
+    document.getElementById('explicacao').innerText = '';
+    document.getElementById('proxima').style.display = 'none';
+    document.getElementById('pergunta').innerHTML = '<h3 class="text-red-600 text-2xl font-bold text-center py-8">Tempo Esgotado!</h3>';
+    
+    // Wait a bit before showing the final screen to let the user see the message
+    setTimeout(() => {
+        mostrarFim();
+    }, 2000);
+}
+
+// --- Core Game Logic ---
+function verificarStatus() {
+  fetch('/api/status_jogo').then(r => r.json()).then(st => {
+    if (st.estado === "iniciado") {
+      document.getElementById('aguarde').style.display = 'none';
+      document.getElementById('inicio').style.display = 'block';
+      document.getElementById('numPerguntas').value = st.qtd_perguntas;
+      clearInterval(rankingInterval);
+      clearInterval(timerAluno);
+    } else {
+      document.getElementById('inicio').style.display = 'none';
+      document.getElementById('aguarde').style.display = 'block';
+      setTimeout(verificarStatus, 5000);
+    }
+  }).catch(() => {
+    setTimeout(verificarStatus, 5000);
+  });
+}
+
+window.onload = verificarStatus;
+
+function comecar() {
+  usuario = document.getElementById('usuario').value.trim();
+  if (!usuario) {
+    alert('Por favor, digite seu nome para começar!');
+    return;
+  }
+  
+  fetch('/api/verifica', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: -1, resposta: null, usuario })
+  }).then(r => r.json()).then(data => {
+    if (data.fim) {
+      alert("Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.");
+      window.location.reload();
+      return;
+    }
+    
+    fetch(`${API}/perguntas?usuario=${encodeURIComponent(usuario)}`).then(r => r.json()).then(qs => {
+      if (qs.erro) {
+        alert(qs.erro);
+        window.location.reload();
+        return;
+      }
+      perguntas = qs;
+      atual = 0; pontuacao = 0; acertos = 0; erros = 0;
+      
+      document.getElementById('inicio').style.display = 'none';
+      document.getElementById('jogo').style.display = 'block';
+      
+      document.getElementById('total-perguntas').innerText = perguntas.length;
+      initPerformanceChart();
+      fetchAndUpdateRanking(); 
+      rankingInterval = setInterval(fetchAndUpdateRanking, 10000);
+      
+      // Start the game and the timer
+      mostrarPergunta();
+      startTimerAluno(); 
+    });
+  });
+}
+
+function mostrarPergunta() {
+  if (atual >= perguntas.length) {
+    mostrarFim();
+    return;
+  }
+  
+  document.getElementById('resultado').innerText = '';
+  document.getElementById('explicacao').innerText = '';
+  document.getElementById('proxima').style.display = 'none';
+  
+  updateProgressBar();
+  
+  const q = perguntas[atual];
+  document.getElementById('pergunta-atual').innerText = atual + 1;
+  document.getElementById('pergunta').innerHTML = q.pergunta;
+  
+  const opcoesDiv = document.getElementById('opcoes');
+  opcoesDiv.innerHTML = '';
+  
+  if (q.tipo === 'multipla_escolha') {
+    q.opcoes.forEach((op, idx) => {
+      let btn = document.createElement('button');
+      btn.className = 'btn opcao-btn w-full text-left p-4 bg-slate-100 rounded-lg border border-slate-200 hover:bg-blue-500 hover:text-white';
+      btn.innerHTML = op;
+      btn.onclick = () => responder(idx);
+      opcoesDiv.appendChild(btn);
+    });
+  } else if (q.tipo === 'associacao') {
+    let termos = q.associacoes.map(a => a.termo);
+    let conceitos = q.associacoes.map(a => a.conceito);
+    conceitos = conceitos.sort(() => Math.random() - 0.5);
+    opcoesDiv.innerHTML = `<b class="text-slate-700">Associe cada termo ao conceito:</b><br>`;
+    termos.forEach((termo, i) => {
+      opcoesDiv.innerHTML += `<div class="flex items-center gap-4 my-2">${termo} → <select id="assoc${i}" class="w-full p-2 border border-slate-300 rounded-lg">` +
+        conceitos.map((c, j) => `<option value="${c}">${j + 1}: ${c}</option>`).join('') +
+        `</select></div>`;
+    });
+    let btn = document.createElement('button');
+    btn.className = 'btn w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
+    btn.innerText = 'Responder';
+    btn.onclick = () => {
+      let resposta = termos.map((t, i) => ({ termo: t, conceito: document.getElementById('assoc' + i).value }));
+      responder(resposta);
+    };
+    opcoesDiv.appendChild(btn);
+  } else if (q.tipo === 'resposta_aberta') {
+    opcoesDiv.innerHTML = `<input type="text" id="respAberta" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Digite sua resposta...">
+      <button class="btn w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="responder(document.getElementById('respAberta').value)">Responder</button>`;
+  }
+}
+
+function responder(resposta) {
+  const q = perguntas[atual];
+  const optionButtons = document.querySelectorAll('.opcao-btn');
+  optionButtons.forEach(btn => btn.disabled = true);
+  if (q.tipo === 'resposta_aberta') document.querySelector('#opcoes button').disabled = true;
+  if (q.tipo === 'associacao') document.querySelector('#opcoes button').disabled = true;
+
+  fetch(`${API}/verifica`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: q.id, resposta, usuario })
+  }).then(r => r.json()).then(data => {
+    if (data.fim) {
+      alert("Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.");
+      window.location.reload();
+      return;
+    }
+    
+    if (data.correta) {
+      document.getElementById('resultado').innerText = '✅ Correto!';
+      document.getElementById('resultado').className = 'text-2xl font-bold text-green-500';
+      acertos++;
+    } else {
+      document.getElementById('resultado').innerText = '❌ Errado!';
+      document.getElementById('resultado').className = 'text-2xl font-bold text-red-500';
+      erros++;
+    }
+    
+    pontuacao = data.pontuacao;
+    document.getElementById('pontuacao-atual').innerText = pontuacao;
+    document.getElementById('explicacao').innerHTML = data.explicacao || '';
+    updatePerformanceChart();
+    fetchAndUpdateRanking();
+    
+    if (atual + 1 === perguntas.length) {
+      document.getElementById('proxima').innerText = "Finalizar";
+    } else {
+      document.getElementById('proxima').innerText = "Próxima";
+    }
+    document.getElementById('proxima').style.display = 'block';
+  });
+}
+
+function proxima() {
+  atual++;
+  mostrarPergunta();
+}
+
+function mostrarFim() {
+  clearInterval(timerAluno); // Stop the timer
+  clearInterval(rankingInterval);
+  document.getElementById('jogo').style.display = 'none';
+  document.getElementById('final').style.display = 'block';
+  document.getElementById('scoreFinal').innerHTML = `Sua pontuação final foi: <b class="text-blue-600">${pontuacao}</b>`;
+  
+  fetch('/api/finalizar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ usuario })
+  });
+}
+
+function updateProgressBar() {
+  const percentage = (atual / perguntas.length) * 100;
+  document.getElementById('progress-bar').style.width = `${percentage}%`;
+}
+
+function initPerformanceChart() {
+  const ctx = document.getElementById('performanceChart').getContext('2d');
+  if (performanceChart) {
+    performanceChart.destroy();
+  }
+  performanceChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Acertos', 'Erros'],
+      datasets: [{
+        label: 'Desempenho',
+        data: [acertos, erros],
+        backgroundColor: [ 'rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)' ],
+        borderColor: [ 'rgba(22, 163, 74, 1)', 'rgba(220, 38, 38, 1)' ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', }, tooltip: { enabled: true } }
+    }
+  });
+}
+
+function updatePerformanceChart() {
+  if (performanceChart) {
+    performanceChart.data.datasets[0].data = [acertos, erros];
+    performanceChart.update();
+  }
+}
+
+async function fetchAndUpdateRanking() {
+    try {
+        const response = await fetch('/api/ranking');
+        if (!response.ok) throw new Error('Failed to fetch ranking');
+        
+        const rankingData = await response.json();
+        const rankingList = document.getElementById('ranking-list');
+        rankingList.innerHTML = '';
+
+        if (rankingData && rankingData.length > 0) {
+            const sortedRanking = rankingData.sort((a, b) => b.pontuacao - a.pontuacao);
+            sortedRanking.slice(0, 5).forEach((player, index) => {
+                const li = document.createElement('li');
+                li.className = `flex justify-between items-center p-2 rounded-lg ${player.usuario === usuario ? 'bg-blue-100 font-bold' : ''}`;
+                
+                let rankIndicator = '';
+                if (index === 0) rankIndicator = '🥇';
+                else if (index === 1) rankIndicator = '🥈';
+                else if (index === 2) rankIndicator = '🥉';
+                else rankIndicator = `#${index + 1}`;
+
+                li.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-6 text-center">${rankIndicator}</span>
+                        <span>${player.usuario}</span>
+                    </span>
+                    <span class="font-semibold">${player.pontuacao}</span>
+                `;
+                rankingList.appendChild(li);
+            });
+        } else {
+            rankingList.innerHTML = '<li class="text-center text-slate-500">Nenhum jogador no ranking ainda.</li>';
+        }
+    } catch (error) {
+        console.error("Could not update ranking:", error);
+        const rankingList = document.getElementById('ranking-list');
+        rankingList.innerHTML = '<li class="text-center text-red-500">Erro ao carregar o ranking.</li>';
+    }
+}
+</script>
+</body>
+</html>

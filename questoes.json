@@ -1,0 +1,254 @@
+[
+  {
+    "id": 1,
+    "pergunta": "Qual alternativa apresenta apenas aplicações de Processamento de Linguagem Natural (PLN)?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Reconhecimento de voz, tradução automática e análise de sentimento",
+      "Processamento de imagem, compressão de áudio e machine learning",
+      "Redes neurais convolucionais, clustering e OCR",
+      "Segmentação de imagens, mineração de dados e clustering"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Reconhecimento de voz, tradução automática e análise de sentimento são aplicações clássicas de PLN."
+  },
+  {
+    "id": 2,
+    "pergunta": "Associe o termo ao conceito correto:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Backpropagation", "conceito": "Ajuste dos pesos das redes neurais"},
+      {"termo": "Prompt", "conceito": "Instrução dada a um modelo de IA"},
+      {"termo": "OCR", "conceito": "Reconhecimento Óptico de Caracteres"},
+      {"termo": "AGI", "conceito": "Inteligência Artificial Geral"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Relaciona conceitos fundamentais da IA abordados na apresentação."
+  },
+  {
+    "id": 3,
+    "pergunta": "Qual o principal risco do viés de representatividade em modelos de IA?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Baixa performance em hardware antigo",
+      "Resultados tendenciosos por falta de diversidade nos dados de treinamento",
+      "Execução lenta do algoritmo",
+      "Alto custo computacional"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "O viés de representatividade pode causar discriminação ou injustiça em decisões automatizadas."
+  },
+  {
+    "id": 4,
+    "pergunta": "Qual termo representa IA capaz de executar múltiplas tarefas cognitivas gerais de forma semelhante ao ser humano?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["AGI", "agi"],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "AGI (Artificial General Intelligence) é o conceito de uma IA realmente versátil e autônoma."
+  },
+  {
+    "id": 5,
+    "pergunta": "Associe cada modelo de IA à sua principal aplicação:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "ChatGPT", "conceito": "Geração de texto conversacional"},
+      {"termo": "Deep Blue", "conceito": "Jogos de xadrez"},
+      {"termo": "AlphaGo", "conceito": "Jogo de Go"},
+      {"termo": "Watson", "conceito": "Respostas a perguntas em linguagem natural"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Ajuda o aluno a distinguir exemplos clássicos de IA."
+  },
+  {
+    "id": 6,
+    "pergunta": "Qual é o papel do 'RAG' (Retrieval-Augmented Generation) em modelos de IA generativa?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Aumentar a velocidade do processamento",
+      "Permitir a IA buscar dados externos para embasar respostas",
+      "Realizar compressão de dados",
+      "Garantir anonimato do usuário"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "RAG combina busca de informações externas com geração de texto, aumentando precisão."
+  },
+  {
+    "id": 7,
+    "pergunta": "Complete: O ________ é a área da IA que permite aos sistemas identificar padrões em grandes volumes de dados e aprender sem ser explicitamente programado.",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["machine learning", "Machine Learning"],
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "Machine Learning é responsável pelo aprendizado a partir de dados."
+  },
+  {
+    "id": 8,
+    "pergunta": "Qual é o nome do robô que foi pioneiro em navegação autônoma em ambientes internos nos anos 70?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["Shakey", "shakey"],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Shakey foi um dos primeiros robôs autônomos equipados com IA."
+  },
+  {
+    "id": 9,
+    "pergunta": "Associe cada conceito ao seu exemplo:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "PLN", "conceito": "Assistentes virtuais como Alexa e Siri"},
+      {"termo": "Visão computacional", "conceito": "Reconhecimento facial em fotos"},
+      {"termo": "Reforço", "conceito": "IA aprendendo a jogar Atari"},
+      {"termo": "OCR", "conceito": "Leitura automática de textos em imagens"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Ajuda a fixar aplicações reais de áreas da IA."
+  },
+  {
+    "id": 10,
+    "pergunta": "Qual termo define a arte de construir instruções para obter o melhor desempenho de um modelo de linguagem?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["engenharia de prompt", "Engenharia de Prompt", "prompt engineering"],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Engenharia de prompt é essencial para maximizar o potencial dos LLMs."
+  },
+  {
+    "id": 11,
+    "pergunta": "Qual a diferença fundamental entre ANI e AGI?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "ANI resolve tarefas específicas; AGI executa tarefas gerais como humanos.",
+      "ANI usa redes neurais, AGI não.",
+      "AGI não utiliza machine learning.",
+      "ANI é sempre baseada em hardware."
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "ANI é Inteligência Artificial Estreita, AGI é Geral."
+  },
+  {
+    "id": 12,
+    "pergunta": "Associe cada termo ao seu significado:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Viés de contexto", "conceito": "Erro por interpretações baseadas em suposições equivocadas"},
+      {"termo": "Viés de automação", "conceito": "Confiança excessiva nas decisões automatizadas"},
+      {"termo": "Viés de representatividade", "conceito": "Falta de diversidade nos dados de treinamento"},
+      {"termo": "Auditoria constante", "conceito": "Revisão periódica de modelos de IA"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Questão sobre conceitos éticos e técnicos em IA."
+  },
+  {
+    "id": 13,
+    "pergunta": "Qual foi o principal marco da IA em 2016 relacionado ao jogo Go?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "A IA derrotou um campeão mundial de xadrez",
+      "AlphaGo derrotou Lee Sedol",
+      "Surgiu o primeiro chatbot",
+      "Iniciou-se o uso militar da IA"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "AlphaGo venceu o campeão mundial de Go, Lee Sedol."
+  },
+  {
+    "id": 14,
+    "pergunta": "O que caracteriza a Inteligência Artificial Generativa?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Executar apenas tarefas repetitivas",
+      "Criar conteúdos inéditos, como textos e imagens",
+      "Apenas processar planilhas",
+      "Focar exclusivamente em lógica matemática"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "A IAG cria conteúdos novos com base em padrões aprendidos."
+  },
+  {
+    "id": 15,
+    "pergunta": "Qual modelo de IA foi responsável pelo avanço em sistemas de recomendação de vídeos em 2011?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["YouTube", "youtube"],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "O uso de IA em recomendação de vídeos foi popularizado por plataformas como o YouTube."
+  },
+  {
+    "id": 16,
+    "pergunta": "Associe cada princípio ético à sua definição:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Supervisão humana", "conceito": "Acompanhamento por pessoas em decisões automatizadas"},
+      {"termo": "Transparência", "conceito": "Explicar como as decisões da IA são tomadas"},
+      {"termo": "Segurança da informação", "conceito": "Proteger dados e sistemas"},
+      {"termo": "Diversidade nos dados", "conceito": "Uso de bases variadas para evitar viés"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Questão sobre ética na aplicação da IA."
+  },
+  {
+    "id": 17,
+    "pergunta": "Qual área da IA está diretamente relacionada ao reconhecimento de padrões visuais?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["visão computacional", "Visão Computacional"],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Visão computacional lida com processamento e análise de imagens."
+  },
+  {
+    "id": 18,
+    "pergunta": "A resposta do ChatGPT 'I'm very sorry, but I don't have access to real-time information...' é um exemplo de quê?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Resposta padrão gerada por LLM",
+      "Resposta dada por humanos",
+      "Código fonte de um site",
+      "Sistema operacional"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "LLMs produzem respostas padrão em casos de limitações de informação."
+  },
+  {
+    "id": 19,
+    "pergunta": "Associe cada etapa ao seu papel no PLN:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Análise de sentimento", "conceito": "Identificar opiniões em textos"},
+      {"termo": "Extração de informações", "conceito": "Identificar nomes, locais e datas"},
+      {"termo": "Processamento de fala", "conceito": "Reconhecimento e síntese de linguagem falada"},
+      {"termo": "Tradução automática", "conceito": "Converter texto/fala entre idiomas"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Etapas fundamentais em aplicações de PLN modernas."
+  },
+  {
+    "id": 20,
+    "pergunta": "Qual algoritmo é usado para que redes neurais profundas aprendam a partir dos erros cometidos durante o treinamento?",
+    "tipo": "resposta_aberta",
+    "resposta_correta": ["backpropagation", "Backpropagation"],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Backpropagation é o algoritmo de ajuste de pesos nas redes neurais profundas."
+  }
+]

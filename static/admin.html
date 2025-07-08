@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Professor - Jogo de Flashcards</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom styles for a better look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: #2563eb; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-secondary { background-color: #ef4444; }
+        .btn-secondary:hover { background-color: #dc2626; }
+        .btn-neutral { background-color: #64748b; }
+        .btn-neutral:hover { background-color: #475569; }
+        .btn-details { background-color: #0ea5e9; font-size: 0.8em; padding: 0.25rem 0.75rem; }
+        .btn-details:hover { background-color: #0284c7; }
+
+        /* Modal styles */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 40;
+            display: none; /* Hidden by default */
+        }
+        #modal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none; /* Hidden by default */
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <!-- Login Screen -->
+    <div id="login" class="max-w-md mx-auto mt-10">
+        <div class="card">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Painel do Professor</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="senha" class="block text-sm font-medium text-gray-700">Senha do professor:</label>
+                    <input type="password" id="senha" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button class="btn btn-primary w-full" onclick="loginAdmin()">Entrar</button>
+                <div id="msgerr" class="text-red-600 text-sm text-center h-5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard" class="max-w-7xl mx-auto" style="display:none">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Dashboard do Jogo</h1>
+
+        <!-- Controls -->
+        <div class="card mb-6">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Controle da Rodada</h3>
+            <div class="flex flex-wrap items-center gap-4">
+                <div>
+                    <label for="qtdPerguntas" class="text-sm font-medium text-gray-600">Nº de perguntas:</label>
+                    <input type="number" id="qtdPerguntas" min="1" max="20" value="5" class="w-20 mt-1 px-2 py-1 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label for="tempoRodada" class="text-sm font-medium text-gray-600">Tempo (minutos):</label>
+                    <input type="number" id="tempoRodada" min="1" max="60" value="10" class="w-20 mt-1 px-2 py-1 border border-gray-300 rounded-md">
+                </div>
+                <button class="btn btn-primary" onclick="iniciarJogo()">▶️ Iniciar Jogo</button>
+                <button class="btn btn-secondary" onclick="resetarJogo()">🔄 Resetar Jogo</button>
+                <a class="btn btn-neutral" href="/api/admin/exportar" target="_blank">Exportar CSV</a>
+            </div>
+        </div>
+        
+        <!-- Timer Display -->
+        <div class="card mb-6 text-center">
+            <h3 class="text-xl font-semibold text-gray-700">
+                ⏳ Tempo Restante: <span id="timer-rodada" class="text-2xl font-bold text-blue-600 tabular-nums">--:--</span>
+            </h3>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Ranking Column -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">🏆 Ranking Atual</h3>
+                    <ul id="ranking-list" class="space-y-2"></ul>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">⭐ Top 5 Jogadores</h3>
+                    <canvas id="rankingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Status & Performance Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">📊 Desempenho Geral (Finalizados)</h3>
+                    <div class="max-w-sm mx-auto">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">🏃 Status dos Alunos</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-green-600 mb-2">✅ Finalizaram</h4>
+                            <ul id="finalizados" class="space-y-2 text-sm"></ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-yellow-600 mb-2">🎮 Jogando</h4>
+                            <ul id="jogando" class="space-y-2 text-sm"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Student Details -->
+    <div id="modal-overlay" onclick="fecharDetalhes()"></div>
+    <div id="modal-content" class="card w-11/12 max-w-2xl">
+        <div id="detalhesAluno"></div>
+    </div>
+
+<script>
+// --- CONFIGURATION ---
+const SENHA = "prof123"; // Troque para sua senha
+
+// --- STATE VARIABLES ---
+let dadosStatusAlunos = {};
+let timerAtualiza = null;
+let detalhesVisivel = false;
+let detalhesUltimoAluno = null;
+let detalhesUltimoGrupo = null;
+let rankingChart = null;
+let performanceChart = null;
+
+// --- CORE FUNCTIONS ---
+function loginAdmin() {
+    let s = document.getElementById('senha').value;
+    if (s === SENHA) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        inicializarDashboard();
+        atualizarTudo();
+        timerAtualiza = setInterval(atualizarTudo, 5000); // Update more frequently for timer
+    } else {
+        const msgErrEl = document.getElementById('msgerr');
+        msgErrEl.innerText = "Senha incorreta!";
+        setTimeout(() => { msgErrEl.innerText = ""; }, 3000);
+    }
+}
+
+function atualizarTudo() {
+    carregarRanking();
+    carregarStatus();
+    atualizarTimerRodada();
+    // Re-render details if modal was open
+    if (detalhesVisivel && detalhesUltimoAluno) {
+        detalharAluno(detalhesUltimoAluno, detalhesUltimoGrupo, true);
+    }
+}
+
+function iniciarJogo() {
+    const qtd = parseInt(document.getElementById('qtdPerguntas').value, 10);
+    const tempo = parseInt(document.getElementById('tempoRodada').value, 10) * 60; // minutos para segundos
+    fetch('/api/admin/iniciar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({qtd_perguntas: qtd, tempo_limite: tempo}) // Add tempo_limite
+    }).then(r=>r.json()).then(()=>{
+        showToast("Jogo liberado para os alunos!");
+        setTimeout(() => { atualizarTudo(); }, 1200);
+    });
+}
+
+function resetarJogo() {
+    if (confirm("Tem certeza que deseja resetar o jogo? Isso limpará todos os dados da rodada atual.")) {
+        fetch('/api/admin/resetar', {method: 'POST'}).then(r=>r.json()).then(()=>{
+            showToast("Jogo resetado. Alunos verão a tela de espera.");
+            setTimeout(() => { atualizarTudo(); }, 1200);
+        });
+    }
+}
+
+function carregarRanking() {
+    fetch('/api/ranking').then(r=>r.json()).then(rk=>{
+        const medals = ['🥇', '🥈', '🥉'];
+        let listHTML = rk.map((lin, index) => `
+            <li class="flex justify-between items-center p-2 rounded-lg ${index < 3 ? 'bg-yellow-100' : ''}">
+                <span class="font-medium text-gray-700">
+                    ${medals[index] || (index + 1) + '.'} ${lin.usuario}
+                </span>
+                <span class="font-bold text-blue-600">${lin.pontuacao} pts</span>
+            </li>
+        `).join('');
+        
+        document.getElementById('ranking-list').innerHTML = listHTML || '<li class="text-gray-500">Ninguém no ranking ainda.</li>';
+        
+        // Update ranking chart
+        atualizarGraficoRanking(rk);
+    });
+}
+
+function carregarStatus() {
+    fetch('/api/admin/respostas').then(r=>r.json()).then(data=>{
+        dadosStatusAlunos = data;
+        
+        let f_html = data.finalizados.map(a=>`
+            <li class="flex justify-between items-center">
+                <span>${a.usuario} - <strong>${a.pontuacao} pts</strong></span>
+                <button class="btn btn-details" onclick="detalharAluno('${a.usuario}','finalizados')">Detalhes</button>
+            </li>`).join('');
+        
+        let j_html = data.jogando.map(a=>`
+            <li class="flex justify-between items-center">
+                <span>${a.usuario}</span>
+                 <button class="btn btn-details" onclick="detalharAluno('${a.usuario}','jogando')">Detalhes</button>
+            </li>`).join('');
+
+        document.getElementById('finalizados').innerHTML = f_html || '<li class="text-gray-500">Nenhum aluno finalizou.</li>';
+        document.getElementById('jogando').innerHTML = j_html || '<li class="text-gray-500">Nenhum aluno jogando.</li>';
+        
+        // Update performance chart
+        atualizarGraficoPerformance(data.finalizados);
+        
+        // This is needed to refresh modal data if it's open
+        if (detalhesVisivel && detalhesUltimoAluno) {
+            detalharAluno(detalhesUltimoAluno, detalhesUltimoGrupo, true);
+        }
+    });
+}
+
+function detalharAluno(nome, grupo, manter) {
+    const aluno = dadosStatusAlunos[grupo]?.find(a => a.usuario === nome);
+    if (!aluno) return;
+
+    detalhesVisivel = true;
+    detalhesUltimoAluno = nome;
+    detalhesUltimoGrupo = grupo;
+
+    let html = `<div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-bold">Respostas de ${aluno.usuario}</h4>
+                    <button class="text-gray-500 hover:text-gray-800" onclick="fecharDetalhes()">✖</button>
+                </div>
+                <p class="mb-4 text-sm">Status: <span class="font-semibold">${aluno.status}</span> | Pontuação: <span class="font-semibold text-blue-600">${aluno.pontuacao}</span></p>`;
+
+    if (aluno.respostas.length === 0) {
+        html += "<i class='text-gray-500'>Nenhuma resposta registrada ainda.</i>";
+    } else {
+        html += `<div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-2 px-3 border-b text-left">#</th>
+                                <th class="py-2 px-3 border-b text-left">Questão ID</th>
+                                <th class="py-2 px-3 border-b text-center">Acertou?</th>
+                                <th class="py-2 px-3 border-b text-left">Resposta</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+        aluno.respostas.forEach((r, idx) => {
+            html += `<tr class="hover:bg-gray-50">
+                        <td class="py-2 px-3 border-b">${idx+1}</td>
+                        <td class="py-2 px-3 border-b">${r.id}</td>
+                        <td class="py-2 px-3 border-b text-2xl text-center">${r.acertou ? '✅' : '❌'}</td>
+                        <td class="py-2 px-3 border-b font-mono text-xs">${typeof r.resposta === 'object' ? JSON.stringify(r.resposta) : r.resposta}</td>
+                     </tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
+    html += `<div class="mt-6 text-right"><button class="btn btn-neutral" onclick="fecharDetalhes()">Fechar</button></div>`;
+    
+    document.getElementById('detalhesAluno').innerHTML = html;
+    document.getElementById('modal-overlay').style.display = 'block';
+    document.getElementById('modal-content').style.display = 'block';
+}
+
+function fecharDetalhes() {
+    detalhesVisivel = false;
+    detalhesUltimoAluno = null;
+    detalhesUltimoGrupo = null;
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.getElementById('modal-content').style.display = 'none';
+}
+
+// --- DASHBOARD/CHART FUNCTIONS ---
+
+function inicializarDashboard() {
+    // Initialize Ranking Chart
+    const rtx = document.getElementById('rankingChart').getContext('2d');
+    rankingChart = new Chart(rtx, {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Pontuação', data: [], backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }] },
+        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Initialize Performance Chart
+    const ptx = document.getElementById('performanceChart').getContext('2d');
+    performanceChart = new Chart(ptx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Acertos', 'Erros'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['rgba(22, 163, 74, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                borderColor: ['rgba(22, 163, 74, 1)', 'rgba(239, 68, 68, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' } } }
+    });
+}
+
+function atualizarGraficoRanking(rankingData) {
+    if (!rankingChart) return;
+    const top5 = rankingData.slice(0, 5).reverse(); // reverse for correct order in horizontal bar
+    rankingChart.data.labels = top5.map(p => p.usuario);
+    rankingChart.data.datasets[0].data = top5.map(p => p.pontuacao);
+    rankingChart.update();
+}
+
+function atualizarGraficoPerformance(finalizadosData) {
+    if (!performanceChart) return;
+    let totalAcertos = 0;
+    let totalErros = 0;
+    finalizadosData.forEach(aluno => {
+        aluno.respostas.forEach(resp => {
+            if (resp.acertou) totalAcertos++;
+            else totalErros++;
+        });
+    });
+    
+    performanceChart.data.datasets[0].data = [totalAcertos, totalErros];
+    performanceChart.update();
+}
+
+function atualizarTimerRodada() {
+    fetch('/api/status_jogo').then(r=>r.json()).then(st=>{
+        const timerEl = document.getElementById('timer-rodada');
+        if (st.estado === "iniciado" && st.tempo_restante !== undefined) {
+            let t = st.tempo_restante > 0 ? st.tempo_restante : 0;
+            let min = String(Math.floor(t / 60)).padStart(2, '0');
+            let sec = String(t % 60).padStart(2, '0');
+            timerEl.innerText = `${min}:${sec}`;
+            
+            // Change color when time is low
+            if (t <= 60 && t > 0) {
+                timerEl.classList.add('text-red-500');
+                timerEl.classList.remove('text-blue-600');
+            } else {
+                timerEl.classList.add('text-blue-600');
+                timerEl.classList.remove('text-red-500');
+            }
+        } else {
+            timerEl.innerText = "--:--";
+            timerEl.classList.add('text-blue-600');
+            timerEl.classList.remove('text-red-500');
+        }
+    });
+}
+
+// Utility for showing a temporary message
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+</body>
+</html>
