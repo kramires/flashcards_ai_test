@@ -40,7 +40,7 @@ Este é um sistema de jogo de flashcards gamificado para uso em sala de aula, co
 1. **Clone o repositório:**
 
 ```bash
-git clone https://github.com/SEU-USUARIO/flashcards-ia.git
+git clone https://github.com/kramires/flashcards_ai_test.git
 cd flashcards-ia
 ````
 
