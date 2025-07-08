@@ -47,7 +47,10 @@
     "id": 4,
     "pergunta": "Qual termo representa IA capaz de executar múltiplas tarefas cognitivas gerais de forma semelhante ao ser humano?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["AGI", "agi"],
+    "resposta_correta": [
+      "AGI", "agi", "Agi", "A.G.I.", "a.g.i.", "Artificial General Intelligence", "inteligência artificial geral",
+      "inteligencia artificial geral", "IA Geral", "ia geral", "IA geral"
+    ],
     "dificuldade": "dificil",
     "peso": 3,
     "explicacao": "AGI (Artificial General Intelligence) é o conceito de uma IA realmente versátil e autônoma."
@@ -85,7 +88,11 @@
     "id": 7,
     "pergunta": "Complete: O ________ é a área da IA que permite aos sistemas identificar padrões em grandes volumes de dados e aprender sem ser explicitamente programado.",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["machine learning", "Machine Learning"],
+    "resposta_correta": [
+      "machine learning", "Machine Learning", "MACHINE LEARNING", "aprendizado de máquina", "aprendizagem de maquina",
+      "aprendizado de maquina", "aprendizagem de máquina", "aprendizagem de máquina", "aprendizado de máquina",
+      "aprendizagem de máquina", "aprendizado de maquina", "aprendizagem de maquina", "machine-learning", "ml", "ML"
+    ],
     "dificuldade": "facil",
     "peso": 1,
     "explicacao": "Machine Learning é responsável pelo aprendizado a partir de dados."
@@ -94,7 +101,9 @@
     "id": 8,
     "pergunta": "Qual é o nome do robô que foi pioneiro em navegação autônoma em ambientes internos nos anos 70?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["Shakey", "shakey"],
+    "resposta_correta": [
+      "Shakey", "shakey", "SHAKEY", "shaky", "Shaky"
+    ],
     "dificuldade": "media",
     "peso": 2,
     "explicacao": "Shakey foi um dos primeiros robôs autônomos equipados com IA."
@@ -117,7 +126,10 @@
     "id": 10,
     "pergunta": "Qual termo define a arte de construir instruções para obter o melhor desempenho de um modelo de linguagem?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["engenharia de prompt", "Engenharia de Prompt", "prompt engineering"],
+    "resposta_correta": [
+      "engenharia de prompt", "Engenharia de Prompt", "ENGENHARIA DE PROMPT", "prompt engineering", "Prompt Engineering",
+      "ENGENHARIA DE PROMPT", "engineering prompt", "prompt", "PROMPT"
+    ],
     "dificuldade": "media",
     "peso": 2,
     "explicacao": "Engenharia de prompt é essencial para maximizar o potencial dos LLMs."
@@ -185,7 +197,9 @@
     "id": 15,
     "pergunta": "Qual modelo de IA foi responsável pelo avanço em sistemas de recomendação de vídeos em 2011?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["YouTube", "youtube"],
+    "resposta_correta": [
+      "YouTube", "youtube", "YOUTUBE", "You Tube", "you tube", "youTube"
+    ],
     "dificuldade": "media",
     "peso": 2,
     "explicacao": "O uso de IA em recomendação de vídeos foi popularizado por plataformas como o YouTube."
@@ -208,7 +222,10 @@
     "id": 17,
     "pergunta": "Qual área da IA está diretamente relacionada ao reconhecimento de padrões visuais?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["visão computacional", "Visão Computacional"],
+    "resposta_correta": [
+      "visão computacional", "visao computacional", "Visão Computacional", "Visao Computacional", "VISÃO COMPUTACIONAL", "VISAO COMPUTACIONAL",
+      "computer vision", "Computer Vision"
+    ],
     "dificuldade": "media",
     "peso": 2,
     "explicacao": "Visão computacional lida com processamento e análise de imagens."
@@ -246,7 +263,9 @@
     "id": 20,
     "pergunta": "Qual algoritmo é usado para que redes neurais profundas aprendam a partir dos erros cometidos durante o treinamento?",
     "tipo": "resposta_aberta",
-    "resposta_correta": ["backpropagation", "Backpropagation"],
+    "resposta_correta": [
+      "backpropagation", "Backpropagation", "BACKPROPAGATION", "retropropagação", "retropropagacao", "RETROPROPAGAÇÃO", "RETROPROPAGACAO"
+    ],
     "dificuldade": "dificil",
     "peso": 3,
     "explicacao": "Backpropagation é o algoritmo de ajuste de pesos nas redes neurais profundas."
