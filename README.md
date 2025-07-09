@@ -94,12 +94,6 @@ flashcards-ia/
 * Não recomendado expor para a internet pública sem firewall/controle de acesso.
 * Ideal para uso local em laboratórios, ambientes de ensino ou eventos.
 
-Perfeito!
-Aqui está o trecho adicional para o README, já incluindo:
-
-* Explicação de como alterar as questões editando o arquivo `questoes.json` (mantendo o formato).
-* Um prompt pronto para o instrutor usar no ChatGPT ou Copilot para gerar questões de qualquer assunto, seguindo o formato estabelecido.
-
 ---
 
 ````markdown
@@ -177,8 +171,3 @@ Depois, basta substituir o conteúdo do arquivo `questoes.json` por este novo co
 
 * Sempre valide o JSON antes de usar (você pode usar ferramentas online como [jsonlint.com](https://jsonlint.com/)).
 * O sistema lê o arquivo automaticamente ao iniciar o servidor.
-
-
-## Licença
-
-[MIT License](LICENSE) (edite conforme desejado)
