@@ -1,0 +1,416 @@
+[
+  {
+    "id": 1,
+    "pergunta": "Qual conjunto de aplicações pertence ao campo do Processamento de Linguagem Natural (PLN)?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Reconhecimento de voz, tradução automática e análise de sentimento",
+      "Reconhecimento facial, detecção de objetos e segmentação de imagens",
+      "Aprendizado por reforço, agrupamento de dados e redução de dimensionalidade",
+      "Compressão de arquivos, criptografia simétrica e filtragem de sinais de áudio"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "PLN trabalha com linguagem humana: reconhecimento de voz, tradução, análise de sentimento, chatbots etc. As demais alternativas descrevem visão computacional, ML geral e processamento de sinais."
+  },
+  {
+    "id": 2,
+    "pergunta": "Associe cada termo ao conceito que melhor o define:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Backpropagation", "conceito": "Algoritmo que propaga o erro pelas camadas da rede para ajustar os pesos"},
+      {"termo": "Prompt", "conceito": "Instrução ou entrada fornecida pelo usuário a um modelo de linguagem"},
+      {"termo": "OCR", "conceito": "Tecnologia que reconhece e extrai texto de imagens ou documentos digitalizados"},
+      {"termo": "AGI", "conceito": "IA capaz de executar qualquer tarefa cognitiva de forma comparável a um humano"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Backpropagation treina redes; prompt direciona LLMs; OCR lê texto em imagens; AGI é a IA geral (ainda teórica)."
+  },
+  {
+    "id": 3,
+    "pergunta": "A principal consequência do viés de representatividade em um modelo de IA é:",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Maior tempo de inferência e consumo elevado de memória durante o processamento",
+      "Resultados enviesados e potencialmente discriminatórios para grupos sub-representados nos dados de treinamento",
+      "Perda de capacidade do modelo de responder em idiomas com muitos dados de treino",
+      "Tendência a confabular informações sobre eventos recentes não presentes no treinamento"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Dados pouco diversos geram resultados enviesados. As outras opções descrevem limitações reais de IA (custo, idioma, alucinação), mas não são consequência específica do viés de representatividade."
+  },
+  {
+    "id": 4,
+    "pergunta": "Qual é a principal distinção entre Inteligência Artificial Estreita (ANI) e Inteligência Artificial Geral (AGI)?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "ANI é especializada em tarefas específicas e definidas; AGI seria capaz de generalizar e executar qualquer tarefa cognitiva como um humano",
+      "ANI utiliza redes neurais; AGI é baseada exclusivamente em regras lógicas pré-programadas",
+      "AGI já está presente em assistentes como ChatGPT e Siri, enquanto ANI ainda é apenas teórica",
+      "ANI processa somente linguagem natural; AGI processa exclusivamente imagens e vídeos"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "ANI (estreita) executa bem uma tarefa definida. AGI generalizaria como humano e ainda é teórica — ChatGPT é ANI, não AGI."
+  },
+  {
+    "id": 5,
+    "pergunta": "Associe cada marco histórico ao evento que melhor o representa:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "1964 — ELIZA", "conceito": "Primeiro chatbot, criado para simular uma psicoterapeuta"},
+      {"termo": "1972 — Shakey", "conceito": "Robô autônomo capaz de navegar em ambientes internos"},
+      {"termo": "1997 — Deep Blue", "conceito": "Sistema que derrotou o campeão mundial de xadrez"},
+      {"termo": "2016 — AlphaGo", "conceito": "Sistema que derrotou o campeão mundial do jogo de Go"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "ELIZA (MIT, 1964), Shakey (SRI, 1972), Deep Blue (IBM, 1997) e AlphaGo (DeepMind, 2016) são marcos da história da IA."
+  },
+  {
+    "id": 6,
+    "pergunta": "O que caracteriza a técnica RAG (Retrieval-Augmented Generation) em sistemas de IA?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Combina a busca de trechos relevantes em uma base de documentos com a geração de texto, ancorando a resposta em fontes recuperadas",
+      "Armazena o histórico completo de conversas anteriores para personalizar as respostas futuras do modelo",
+      "Ajusta os pesos do modelo com dados específicos do domínio por meio de um ciclo adicional de treinamento supervisionado",
+      "Divide uma tarefa complexa em subtarefas menores e as executa em paralelo com múltiplos modelos especializados"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "RAG = Recuperação + Geração. O modelo recebe trechos relevantes de uma base, reduzindo invenção. A opção B descreve memória de contexto; C descreve fine-tuning; D descreve sistemas multi-agente."
+  },
+  {
+    "id": 7,
+    "pergunta": "Qual das alternativas melhor define Inteligência Artificial?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Área da computação que cria sistemas capazes de executar tarefas que requerem raciocínio, aprendizado ou tomada de decisão de forma similar ao esperado de humanos",
+      "Tecnologia que automatiza decisões seguindo regras lógicas fixas, definidas integralmente por programadores antes da execução",
+      "Sistema especializado no armazenamento, indexação e recuperação eficiente de grandes volumes de dados estruturados",
+      "Protocolo de comunicação que permite a integração e troca de mensagens entre sistemas de software heterogêneos"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "IA cria sistemas que raciocinam e aprendem de forma similar ao humano. Regras fixas (B) descrevem automação tradicional; C é banco de dados; D é middleware/API."
+  },
+  {
+    "id": 8,
+    "pergunta": "Shakey, desenvolvido no Stanford Research Institute na década de 1970, foi um dos primeiros robôs a utilizar técnicas de IA para navegar de forma autônoma em ambientes internos.",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Correto. Shakey (1969–1972) foi pioneiro em planejamento autônomo e navegação com IA em ambientes fechados."
+  },
+  {
+    "id": 9,
+    "pergunta": "Associe cada área da IA ao exemplo que melhor a representa:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "PLN", "conceito": "Assistentes virtuais, chatbots e sistemas de tradução automática"},
+      {"termo": "Visão computacional", "conceito": "Reconhecimento facial e detecção de objetos em imagens e vídeos"},
+      {"termo": "Aprendizado por reforço", "conceito": "Agente que aprende a jogar videogames por tentativa, erro e recompensa"},
+      {"termo": "OCR", "conceito": "Extração automática de texto de documentos digitalizados e fotografias"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "PLN lida com linguagem; visão computacional processa imagens; reforço aprende por interação com o ambiente; OCR extrai texto de imagens."
+  },
+  {
+    "id": 10,
+    "pergunta": "Engenharia de Prompt pode ser definida como:",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "A prática de formular instruções com clareza e precisão para obter respostas úteis e alinhadas à tarefa de um modelo de linguagem",
+      "O processo de ajuste fino (fine-tuning) de um modelo de IA com dados específicos de um domínio de aplicação",
+      "Técnica de compressão de modelos de linguagem para reduzir custo computacional e tempo de resposta",
+      "Método de avaliação e comparação sistemática da qualidade de saídas geradas por diferentes modelos de IA"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Engenharia de Prompt = formular instruções para dirigir o modelo. Fine-tuning (B), compressão (C) e avaliação comparativa (D) são técnicas distintas da área de IA."
+  },
+  {
+    "id": 11,
+    "pergunta": "ELIZA, programa desenvolvido no MIT em 1964, é considerada um dos primeiros chatbots da história, projetada para simular uma psicoterapeuta em conversas em linguagem natural.",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 0,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "Correto. ELIZA (Joseph Weizenbaum, MIT, 1964) usava substituição de padrões para simular uma terapeuta e surpreendeu ao criar a ilusão de compreensão."
+  },
+  {
+    "id": 12,
+    "pergunta": "Associe cada conceito ao seu significado no contexto de viés em sistemas de IA:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Viés de contexto", "conceito": "Conclusões incorretas derivadas de premissas ou suposições inadequadas sobre o contexto"},
+      {"termo": "Viés de automação", "conceito": "Tendência a confiar excessivamente na decisão automatizada, subestimando a possibilidade de erro da máquina"},
+      {"termo": "Viés de representatividade", "conceito": "Dados de treinamento pouco diversos geram resultados injustos para grupos sub-representados"},
+      {"termo": "Auditoria constante", "conceito": "Revisão periódica do modelo e de seus resultados para identificar e corrigir desvios ao longo do tempo"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Três tipos de viés em IA e a auditoria como medida de mitigação: contexto (premissas ruins), automação (confiança excessiva) e representatividade (dados enviesados)."
+  },
+  {
+    "id": 13,
+    "pergunta": "Em 2016, qual marco histórico da Inteligência Artificial foi alcançado no campo dos jogos de tabuleiro?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "AlphaGo, da DeepMind, derrotou Lee Sedol, então campeão mundial de Go",
+      "Deep Blue, da IBM, venceu Garry Kasparov no xadrez em torneio histórico",
+      "Watson, da IBM, derrotou campeões humanos no programa televisivo Jeopardy!",
+      "AlphaZero aprendeu xadrez, Go e shogi do zero e superou os melhores programas especializados"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "AlphaGo (2016) derrotou Lee Sedol. Deep Blue venceu Kasparov em 1997; Watson venceu Jeopardy! em 2011; AlphaZero foi em 2017 — todos marcos reais, mas de anos diferentes."
+  },
+  {
+    "id": 14,
+    "pergunta": "O que define a Inteligência Artificial Generativa?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Ramo da IA que cria conteúdo novo (texto, imagem, áudio, código) a partir de padrões aprendidos em grandes volumes de dados",
+      "Sistema de IA projetado para detectar e sinalizar conteúdo gerado artificialmente em plataformas digitais",
+      "Modelo que aprende exclusivamente por interação com o ambiente e recebimento de recompensas, sem dados de treinamento prévios",
+      "Tecnologia que automatiza a geração de relatórios estruturados a partir de bancos de dados tabulares"
+    ],
+    "resposta_correta": 0,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "IA Generativa cria conteúdo novo a partir de padrões (ChatGPT, DALL-E). B descreve detecção de IA; C descreve aprendizado por reforço; D descreve BI/automação de relatórios."
+  },
+  {
+    "id": 15,
+    "pergunta": "O que é OCR (Optical Character Recognition)?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Tecnologia que converte automaticamente fala humana em texto escrito em tempo real",
+      "Tecnologia que reconhece e extrai automaticamente texto presente em imagens ou documentos digitalizados",
+      "Sistema de reconhecimento de padrões biométricos utilizado para identificação facial",
+      "Processo automatizado de tradução de texto entre idiomas baseado em regras gramaticais"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "OCR = leitura de texto em imagens. A descreve ASR (fala para texto); C é reconhecimento facial; D é tradução baseada em regras."
+  },
+  {
+    "id": 16,
+    "pergunta": "Associe cada eixo da Diretriz Estratégica de IA do Exército Brasileiro ao seu foco principal:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Conformidade com valores institucionais", "conceito": "Uso da IA compatível com a ética, a disciplina e a identidade da Força Terrestre"},
+      {"termo": "Segurança da informação", "conceito": "Proteção de dados e sistemas ao longo de todo o ciclo de vida da informação"},
+      {"termo": "Supervisão e responsabilidade humana", "conceito": "Decisão e prestação de contas permanecem no homem; IA atua como instrumento de apoio"},
+      {"termo": "Transparência e rastreabilidade", "conceito": "Clareza sobre onde e como a IA é empregada, permitindo controle e auditoria"}
+    ],
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "A Diretriz EB20-D-02.032 (2024) estrutura o uso de IA no EB em conformidade, segurança, supervisão humana e transparência."
+  },
+  {
+    "id": 17,
+    "pergunta": "A tarefa de treinamento central em modelos de linguagem de grande escala (LLMs) é prever o próximo token (palavra ou subpalavra) dado o contexto anterior, repetida bilhões de vezes sobre extensos corpora de texto.",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 0,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Correto. LLMs aprendem por autocompletar texto — prever o próximo token. Esse processo repetido em escala gera fluência, mas não implica compreensão genuína."
+  },
+  {
+    "id": 18,
+    "pergunta": "Um artigo acadêmico publicado contém o trecho: 'I'm very sorry, but I don't have access to real-time information and my training only goes up to…'. Esse trecho é indício de:",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Citação extraída da política de termos de uso de uma plataforma de acesso aberto",
+      "Resposta automática gerada por sistema de revisão por pares da revista científica",
+      "Uso de assistente de IA para redigir parte do texto, sem revisão ou edição adequada pelo autor",
+      "Trecho de resposta de uma API de consulta a banco de dados corporativo em inglês"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Essa frase é característica de LLMs genéricos. Sua presença em artigo publicado indica que o texto foi gerado ou apoiado por IA sem revisão crítica pelo autor."
+  },
+  {
+    "id": 19,
+    "pergunta": "Associe cada tarefa ao subcampo do PLN (Processamento de Linguagem Natural) que a realiza:",
+    "tipo": "associacao",
+    "associacoes": [
+      {"termo": "Análise de sentimento", "conceito": "Identificar opiniões, emoções ou polaridade (positivo/negativo) em textos"},
+      {"termo": "Extração de informações", "conceito": "Reconhecer e extrair entidades como nomes, datas, locais e organizações"},
+      {"termo": "Processamento de fala", "conceito": "Reconhecer e sintetizar linguagem falada (voz para texto e texto para voz)"},
+      {"termo": "Tradução automática", "conceito": "Converter texto ou fala de um idioma para outro preservando o significado"}
+    ],
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Subcampos do PLN: sentimento (opiniões), extração (entidades), fala (áudio-texto) e tradução (idiomas)."
+  },
+  {
+    "id": 20,
+    "pergunta": "Em redes neurais profundas, qual mecanismo propaga o sinal de erro da camada de saída de volta pelas camadas intermediárias, permitindo o ajuste dos pesos de cada neurônio?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Stochastic Gradient Descent (SGD)",
+      "Batch Normalization",
+      "Backpropagation (retropropagação do erro)",
+      "Dropout Regularization"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Backpropagation calcula gradientes e propaga o erro pelas camadas. SGD é o otimizador que usa esses gradientes; Batch Normalization estabiliza o treinamento; Dropout é regularização — todos reais, mas diferentes."
+  },
+  {
+    "id": 21,
+    "pergunta": "Em Machine Learning, o sistema aprende padrões a partir de exemplos e dados, sem necessitar de regras lógicas explícitas programadas manualmente para cada situação.",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 0,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "Correto. ML aprende de dados, ao contrário de sistemas baseados em regras fixas (automação tradicional / sistemas especialistas)."
+  },
+  {
+    "id": 22,
+    "pergunta": "O que caracterizou o período chamado de 'Inverno da IA', ocorrido entre as décadas de 1970 e 1980?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Aceleração tecnológica impulsionada pelo surgimento dos primeiros microprocessadores e computadores pessoais",
+      "Restrições governamentais ao desenvolvimento de sistemas autônomos em resposta ao uso militar da IA",
+      "Expectativas excessivas seguidas de resultados aquém do prometido, gerando queda de investimentos e interesse",
+      "Migração dos principais pesquisadores de IA para a área de segurança cibernética e criptografia"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "O Inverno da IA resultou do excesso de promessas e decepção com os resultados, levando ao corte de financiamento. Microprocessadores (A) surgiram nessa época, mas aceleraram a computação geral — não foram causados pelo inverno da IA."
+  },
+  {
+    "id": 23,
+    "pergunta": "Em 1997, o sistema Deep Blue ficou conhecido por:",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Derrotar Lee Sedol, campeão mundial de Go, marcando o avanço da IA em jogos complexos de estratégia",
+      "Conquistar a vitória no programa televisivo Jeopardy!, superando campeões humanos em perguntas gerais",
+      "Vencer Garry Kasparov, então campeão mundial de xadrez, em uma série de partidas históricas",
+      "Ser o primeiro sistema a navegar autonomamente em terreno externo não estruturado"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "media",
+    "peso": 2,
+    "explicacao": "Deep Blue (IBM, 1997) derrotou Kasparov no xadrez. Lee Sedol perdeu para AlphaGo em 2016; Jeopardy! foi o Watson em 2011; navegação autônoma externa refere-se aos Mars Rovers."
+  },
+  {
+    "id": 24,
+    "pergunta": "No aprendizado não supervisionado, os dados utilizados no treinamento não possuem rótulos ou respostas esperadas; o algoritmo descobre padrões e estruturas por conta própria, como no agrupamento (clustering).",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 0,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "Correto. No supervisionado há rótulos (gabarito). No não supervisionado, o algoritmo agrupa dados sem resposta prévia — ex.: segmentação de clientes por comportamento."
+  },
+  {
+    "id": 25,
+    "pergunta": "Em uma arquitetura RAG segura, o modelo de linguagem acessa diretamente toda a base de dados da organização para formular respostas mais precisas e completas.",
+    "tipo": "multipla_escolha",
+    "opcoes": ["Verdadeiro", "Falso"],
+    "resposta_correta": 1,
+    "dificuldade": "muito_dificil",
+    "peso": 4,
+    "explicacao": "Falso. O princípio do RAG seguro é que o modelo recebe apenas fragmentos selecionados e filtrados pelo banco vetorial — não acessa a base completa. Isso reduz a exposição de dados sensíveis."
+  },
+  {
+    "id": 26,
+    "pergunta": "No contexto de contrainteligência digital, o que representa um risco específico gerado por diálogos longos com assistentes de IA generativa?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Modelos perdem coerência progressivamente em conversas longas, tornando as respostas tecnicamente imprecisas",
+      "O histórico extenso aumenta o custo por token e pode ultrapassar o limite de contexto do modelo",
+      "A conversação extensa pode expor padrões de trabalho, estrutura organizacional ou detalhes operacionais sensíveis",
+      "Provedores são obrigados a excluir automaticamente conversas longas após período determinado por regulação"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "muito_dificil",
+    "peso": 4,
+    "explicacao": "O risco de CI é a exposição involuntária de contexto sensível. A (degradação) e B (custo/contexto) são limitações técnicas reais, mas não são riscos de contrainteligência. D é uma medida de privacidade, não um risco."
+  },
+  {
+    "id": 27,
+    "pergunta": "Antes de enviar informações a uma ferramenta de IA, qual dos itens abaixo trata especificamente do controle institucional sobre a ferramenta utilizada?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Estas informações podem ser compartilhadas com terceiros conforme as normas vigentes na organização?",
+      "A ferramenta está homologada ou em ambiente autorizado pela organização?",
+      "A resposta gerada será verificada em fonte oficial antes de ser utilizada na decisão?",
+      "O documento final indicará com transparência onde e como a IA foi utilizada?"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "muito_dificil",
+    "peso": 4,
+    "explicacao": "A homologação/autorização da ferramenta (B) é o item que trata do controle institucional. Os demais são verificações legítimas de segurança, classificação e transparência — todos válidos, mas com focos distintos."
+  },
+  {
+    "id": 28,
+    "pergunta": "Qual é o documento do Exército Brasileiro que estabelece as diretrizes estratégicas para o uso de Inteligência Artificial na Força Terrestre?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "EB20-MC-10.223 — Manual de Operações de Informação no Ambiente Digital",
+      "EB20-D-02.032 — Diretriz Estratégica de Inteligência Artificial (1ª ed., 2024)",
+      "EB70-CI-11.440 — Instrução de Cibersegurança e Proteção de Redes Táticas",
+      "EB30-IR-01.023 — Regulamento Interno e dos Serviços Gerais das Organizações Militares"
+    ],
+    "resposta_correta": 1,
+    "dificuldade": "dificil",
+    "peso": 3,
+    "explicacao": "O documento é o EB20-D-02.032, 1ª edição de 2024, publicado pelo EME. As outras opções seguem a nomenclatura de documentos EB mas tratam de temas distintos."
+  },
+  {
+    "id": 29,
+    "pergunta": "Qual das afirmativas representa a postura mais alinhada ao uso responsável e seguro de modelos de IA generativa em ambiente profissional?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Modelos com alta taxa histórica de acerto podem ser usados como fonte primária, reduzindo a necessidade de verificação manual",
+      "A responsabilidade pelas saídas do modelo é compartilhada com o fornecedor conforme os termos de uso do serviço",
+      "Verificar as saídas em fontes primárias, manter a responsabilidade decisória humana e evitar incluir dados sensíveis em prompts enviados a ferramentas externas",
+      "Para decisões operacionais de baixo risco, o modelo pode ser empregado diretamente; para decisões críticas, exige aprovação do fabricante"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "muito_dificil",
+    "peso": 4,
+    "explicacao": "Uso responsável: verificar sempre, manter decisão humana, minimizar dados sensíveis. A (confiar em precisão histórica) ignora alucinações; B (responsabilidade compartilhada) desvia a prestação de contas; D (aprovação do fabricante) é fictício."
+  },
+  {
+    "id": 30,
+    "pergunta": "Por volta de 2011, qual aplicação de Inteligência Artificial ganhou grande destaque em plataformas de streaming e vídeo na internet?",
+    "tipo": "multipla_escolha",
+    "opcoes": [
+      "Sistemas de detecção automatizada de infrações de direitos autorais em conteúdo enviado pelos usuários",
+      "Reconhecimento automático de fala para geração de legendas em tempo real em múltiplos idiomas",
+      "Sistemas de recomendação de conteúdo personalizados, baseados no histórico e perfil de cada usuário",
+      "Tradução automática de títulos e descrições de vídeos para dezenas de idiomas simultaneamente"
+    ],
+    "resposta_correta": 2,
+    "dificuldade": "facil",
+    "peso": 1,
+    "explicacao": "Em 2011, os sistemas de recomendação (como os do YouTube) ganharam destaque por personalizar o conteúdo sugerido. As outras opções descrevem funcionalidades reais, mas que se popularizaram em momentos diferentes."
+  }
+]

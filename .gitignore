@@ -1,0 +1,26 @@
+# Ambiente virtual Python
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Logs e temporários
+*.log
+/tmp/
+
+# Variáveis de ambiente / segredos
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
