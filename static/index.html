@@ -3,271 +3,363 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo de Flashcards - Dashboard do Aluno</title>
-  <!-- Tailwind CSS for styling -->
+  <title>Jogo de Flashcards — IA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for performance graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Custom font and minor adjustments */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background-color: #f1f5f9; /* slate-100 */
-    }
-    /* Custom styles for buttons and interactive elements */
-    .btn {
-      transition: all 0.2s ease-in-out;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+
+    .btn { transition: all 0.2s ease-in-out; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+
+    /* Opções de múltipla escolha */
+    .opcao-btn {
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.2s, box-shadow 0.2s;
     }
     .opcao-btn:not(:disabled):hover {
-        background-color: #3b82f6; /* blue-500 */
+      background-color: #3b82f6;
+      border-color: #2563eb;
+      color: white;
     }
-    .opcao-btn:disabled {
-        cursor: not-allowed;
-        opacity: 0.7;
+    .opcao-btn:disabled { cursor: not-allowed; opacity: 0.85; }
+
+    /* Destaque após responder */
+    .opcao-btn.correta {
+      background-color: #22c55e !important;
+      border-color: #16a34a !important;
+      color: white !important;
+      font-weight: 700;
     }
-    /* Animation for elements appearing */
-    .fade-in {
-        animation: fadeIn 0.5s ease-in-out;
+    .opcao-btn.errada {
+      background-color: #ef4444 !important;
+      border-color: #dc2626 !important;
+      color: white !important;
     }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+
+    /* Timer pulsante nos últimos 60s */
+    .timer-critico { color: #dc2626 !important; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Animação de transição entre perguntas */
+    @keyframes slideInRight { from{opacity:0;transform:translateX(28px)} to{opacity:1;transform:translateX(0)} }
+    .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.22,0.61,0.36,1) both; }
+
+    /* Gabarito */
+    .gab-card { border-radius: 0.5rem; padding: 0.75rem 1rem; border-width: 1px; }
+    .gab-acertou { background-color: #f0fdf4; border-color: #86efac; }
+    .gab-errou   { background-color: #fef2f2; border-color: #fca5a5; }
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
 <div id="main-container" class="w-full max-w-4xl mx-auto">
 
-  <!-- Waiting Screen -->
-  <div id="aguarde" class="text-center bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <h2 class="text-2xl font-bold text-slate-800 mb-4">Aguardando o instrutor liberar o jogo…</h2>
-    <p class="text-slate-600 mb-6">Fique atento, o botão de início aparecerá assim que o professor liberar!</p>
-    <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto"></div>
+  <!-- Tela de espera -->
+  <div id="aguarde" class="text-center bg-white p-10 rounded-2xl shadow-lg fade-in" style="display:none;">
+    <div class="text-6xl mb-4">🤖</div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-3">Aguardando o instrutor…</h2>
+    <p class="text-slate-500 mb-8">O jogo será liberado em instantes. Fique atento!</p>
+    <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mx-auto"></div>
   </div>
 
-  <!-- Start Screen -->
+  <!-- Tela de início -->
   <div id="inicio" class="bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <h2 class="text-3xl font-bold text-slate-800 text-center mb-2">Jogo de Flashcards</h2>
-    <p class="text-center text-slate-500 mb-8">Inteligência Artificial</p>
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-3">🧠</div>
+      <h2 class="text-3xl font-bold text-slate-800">Flashcards — IA</h2>
+      <p class="text-slate-400 mt-1">Quiz gamificado de Inteligência Artificial</p>
+    </div>
     <div class="space-y-4">
       <div>
-        <label for="usuario" class="block text-sm font-medium text-slate-700 mb-1">Digite seu nome:</label>
-        <input type="text" id="usuario" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome aqui">
+        <label for="usuario" class="block text-sm font-semibold text-slate-700 mb-1">Seu nome:</label>
+        <input type="text" id="usuario"
+          class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+          placeholder="Digite seu nome aqui" autocomplete="off">
       </div>
       <div>
-        <label for="numPerguntas" class="block text-sm font-medium text-slate-700 mb-1">Quantidade de perguntas:</label>
-        <input type="number" id="numPerguntas" class="w-full px-4 py-2 border bg-slate-100 border-slate-300 rounded-lg" disabled>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Perguntas na rodada:</label>
+        <input type="number" id="numPerguntas"
+          class="w-full px-4 py-3 border bg-slate-100 border-slate-200 rounded-xl text-lg text-slate-500" disabled>
       </div>
     </div>
-    <button class="btn w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700" onclick="comecar()">Começar Jogo</button>
+    <button class="btn w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-blue-700"
+      onclick="comecar()">▶ Começar Jogo</button>
   </div>
 
-  <!-- Game Screen -->
+  <!-- Tela do jogo -->
   <div id="jogo" class="fade-in" style="display:none;">
-    <!-- Header with Progress and Timer -->
-    <div class="bg-white p-4 rounded-t-2xl shadow-md mb-4 flex flex-col sm:flex-row sm:justify-between items-center gap-4">
-        <div class="w-full sm:w-auto">
-            <p class="text-lg font-semibold text-slate-700 text-center sm:text-left">
-                Pergunta <span id="pergunta-atual"></span> de <span id="total-perguntas"></span>
-            </p>
-            <div class="w-full bg-slate-200 rounded-full h-4 mt-2">
-                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-out"></div>
-            </div>
+
+    <!-- Header: progresso + timer da rodada -->
+    <div class="bg-white p-4 rounded-2xl shadow-md mb-4 flex flex-col sm:flex-row sm:justify-between items-center gap-3">
+      <div class="w-full sm:w-auto flex-1">
+        <p class="text-sm font-semibold text-slate-500 mb-1 text-center sm:text-left">
+          Pergunta <span id="pergunta-atual" class="text-slate-800"></span>
+          de <span id="total-perguntas" class="text-slate-800"></span>
+        </p>
+        <div class="w-full bg-slate-200 rounded-full h-3">
+          <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out" style="width:0%"></div>
         </div>
-        <div class="mt-2 sm:mt-0">
-            <span class="font-mono text-2xl font-bold text-blue-700 flex items-center gap-2">
-                <span>⏰</span>
-                <span id="timer-aluno">--:--</span>
-            </span>
-        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <button id="btn-mute" onclick="toggleMute(this)"
+          class="text-slate-400 hover:text-slate-600 text-xl leading-none" title="Mudo/Som">🔊</button>
+        <span class="text-xl">⏰</span>
+        <span id="timer-aluno" class="font-mono text-2xl font-bold text-blue-700 tabular-nums">--:--</span>
+      </div>
     </div>
-    
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Main Question Area -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
-            <!-- Badge de dificuldade + cronômetro da questão -->
-            <div class="flex justify-between items-center mb-3">
-                <span id="badge-dificuldade" class="text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide"></span>
-                <span class="font-mono text-sm font-semibold text-slate-500 flex items-center gap-1">
-                    ⚡ <span id="timer-questao">0s</span>
-                </span>
-            </div>
-            <div id="pergunta" class="text-xl font-semibold text-slate-800 mb-6 min-h-[60px]"></div>
-            <div id="opcoes" class="space-y-3"></div>
-            <div id="feedback" class="mt-6 text-center">
-                <p id="resultado" class="text-2xl font-bold"></p>
-                <p id="pontos-feedback" class="text-lg font-semibold mt-1"></p>
-                <p id="explicacao" class="text-slate-600 mt-2 text-sm"></p>
-            </div>
-            <button id="proxima" class="btn w-full mt-6 bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600" style="display:none" onclick="proxima()">Próxima</button>
+
+      <!-- Área da pergunta -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+
+        <!-- Badge dificuldade + cronômetro da questão -->
+        <div class="flex justify-between items-center mb-4">
+          <span id="badge-dificuldade" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"></span>
+          <span class="font-mono text-sm text-slate-400 flex items-center gap-1">
+            ⚡ <span id="timer-questao">0.0s</span>
+          </span>
         </div>
 
-        <!-- Dashboard Panel -->
-        <div class="space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <h3 class="font-bold text-lg text-slate-800 mb-3 text-center">Meu Desempenho</h3>
-                <canvas id="performanceChart"></canvas>
-                <p class="text-center mt-4 text-2xl font-bold text-slate-700">Score: <span id="pontuacao-atual">0</span></p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <h3 class="font-bold text-lg text-slate-800 mb-4 text-center">Ranking da Rodada</h3>
-                <ul id="ranking-list" class="space-y-2">
-                    <!-- Ranking items will be injected here by JS -->
-                    <li class="text-center text-slate-500">Carregando ranking...</li>
-                </ul>
-            </div>
+        <div id="pergunta" class="text-xl font-semibold text-slate-800 mb-6 min-h-[56px] leading-snug"></div>
+        <div id="opcoes" class="space-y-3"></div>
+
+        <!-- Feedback -->
+        <div id="feedback" class="mt-5 text-center" style="display:none;">
+          <p id="resultado" class="text-2xl font-bold"></p>
+          <p id="pontos-feedback" class="text-base font-semibold mt-1"></p>
+          <p id="explicacao" class="text-slate-500 mt-2 text-sm leading-relaxed"></p>
         </div>
+
+        <button id="proxima"
+          class="btn w-full mt-6 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600"
+          style="display:none" onclick="proxima()">Próxima →</button>
+      </div>
+
+      <!-- Painel lateral -->
+      <div class="space-y-4">
+        <div class="bg-white p-5 rounded-2xl shadow-lg">
+          <h3 class="font-bold text-slate-700 mb-3 text-center">Meu Desempenho</h3>
+          <canvas id="performanceChart"></canvas>
+          <p class="text-center mt-3 text-2xl font-bold text-slate-700">
+            <span id="pontuacao-atual">0</span> <span class="text-sm font-normal text-slate-400">pts</span>
+          </p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-lg">
+          <h3 class="font-bold text-slate-700 mb-3 text-center">🏆 Ranking</h3>
+          <ul id="ranking-list" class="space-y-2 text-sm">
+            <li class="text-center text-slate-400">Carregando…</li>
+          </ul>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Final Screen -->
-  <div id="final" class="text-center bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <h2 class="text-3xl font-bold text-slate-800 mb-4">Você completou esta rodada!</h2>
-    <div id="scoreFinal" class="text-xl text-slate-600 mb-6"></div>
-    <p class="text-slate-500">Aguarde o instrutor liberar uma nova rodada para jogar novamente.</p>
-    <button class="btn w-full max-w-xs mx-auto mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700" onclick="window.location.reload()">Voltar ao Início</button>
+  <!-- Tela final -->
+  <div id="final" class="bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
+    <div class="text-center">
+      <div id="final-emoji" class="text-6xl mb-3"></div>
+      <h2 class="text-3xl font-bold text-slate-800 mb-1">Rodada concluída!</h2>
+      <p id="scoreFinal" class="text-xl text-slate-600 mb-3"></p>
+      <div id="final-stats" class="flex justify-center gap-6 text-sm mb-2"></div>
+    </div>
+
+    <!-- Gabarito -->
+    <div id="gabarito" class="mt-6"></div>
+
+    <p class="text-slate-400 text-center text-sm mt-6">
+      Aguarde o instrutor liberar uma nova rodada para jogar novamente.
+    </p>
+    <button class="btn block w-full max-w-xs mx-auto mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700"
+      onclick="window.location.reload()">Voltar ao Início</button>
   </div>
 
-</div>
+</div><!-- /main-container -->
 
 <script>
 const API = window.location.origin + '/api';
+
+// Estado do jogo
 let perguntas = [], atual = 0, pontuacao = 0, usuario = '';
 let acertos = 0, erros = 0;
 let performanceChart = null;
 let rankingInterval = null;
+
+// Timer da rodada (local — sem polls a cada segundo)
 let timerAluno = null;
-// Cronômetro por questão
+let localGameStart = null;
+let initialTimeRemaining = null;
+
+// Timer por questão
 let tempoInicioPergunta = null;
 let timerQuestao = null;
 
-const DIFICULDADE_LABEL = { facil: 'Fácil', media: 'Médio', dificil: 'Difícil', muito_dificil: 'Muito Difícil' };
-const DIFICULDADE_COR   = { facil: 'bg-green-100 text-green-700', media: 'bg-yellow-100 text-yellow-700', dificil: 'bg-orange-100 text-orange-700', muito_dificil: 'bg-red-100 text-red-700' };
+// Histórico para o gabarito
+let historicoRespostas = [];
 
-// --- Timer Functions ---
-function startTimerAluno() {
-    if (timerAluno) clearInterval(timerAluno);
-    updateTimerAluno(); // Call immediately to avoid 1s delay
-    timerAluno = setInterval(updateTimerAluno, 1000);
+// Estado das associações (tap-to-match)
+let termoSelecionado = null;
+let paresAssociacao  = {};
+
+// Áudio
+let audioMutado = false;
+
+// Constantes de UI
+const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const DIFICULDADE_LABEL = { facil: 'Fácil', media: 'Médio', dificil: 'Difícil', muito_dificil: 'Muito Difícil' };
+const DIFICULDADE_COR   = {
+  facil:        'bg-green-100 text-green-700',
+  media:        'bg-yellow-100 text-yellow-700',
+  dificil:      'bg-orange-100 text-orange-700',
+  muito_dificil:'bg-red-100 text-red-700'
+};
+
+// ─── Áudio (Web Audio API, sem dependência externa) ──────────────────────────
+
+function playSound(tipo) {
+  if (audioMutado) return;
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    if (tipo === 'acerto') {
+      // Dois tons ascendentes: C5 → G5
+      [[523.25, 0], [783.99, 0.13]].forEach(([freq, delay]) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        osc.connect(gain);
+        gain.gain.setValueAtTime(0.22, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.18);
+      });
+    } else {
+      // Tom grave descendente
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.25);
+    }
+  } catch (_) { /* silencia em navegadores sem suporte */ }
 }
 
-function updateTimerAluno() {
-    fetch('/api/status_jogo').then(r => r.json()).then(st => {
-        if (st.estado === "iniciado" && st.tempo_restante !== undefined) {
-            const tempoRestante = st.tempo_restante;
-            const min = String(Math.floor(tempoRestante / 60)).padStart(2, '0');
-            const sec = String(tempoRestante % 60).padStart(2, '0');
-            document.getElementById('timer-aluno').innerText = `${min}:${sec}`;
-            
-            if (tempoRestante <= 0) {
-                clearInterval(timerAluno);
-                bloquearJogoPorTempo();
-            }
-        } else {
-            // If game is no longer 'iniciado' or timer data is missing, stop the timer.
-            clearInterval(timerAluno);
-        }
-    }).catch(err => {
-        console.error("Error fetching timer status:", err);
-        clearInterval(timerAluno); // Stop timer on error
-    });
+function toggleMute(btn) {
+  audioMutado = !audioMutado;
+  btn.textContent = audioMutado ? '🔇' : '🔊';
+}
+
+// ─── Tap-to-match (questões de associação) ───────────────────────────────────
+
+function selecionarTermo(el, termo) {
+  // Clique num termo já pareado → desfaz o par
+  if (paresAssociacao[termo]) {
+    const concEl = document.querySelector(`.assoc-conceito[data-conceito="${CSS.escape(paresAssociacao[termo])}"]`);
+    if (concEl) {
+      concEl.disabled = false;
+      concEl.className = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm transition-all';
+    }
+    delete paresAssociacao[termo];
+    el.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
+    termoSelecionado = null;
+    atualizarStatusAssoc();
+    return;
+  }
+  // Deseleciona o termo anterior (se houver)
+  if (termoSelecionado !== null && termoSelecionado !== termo) {
+    const prev = document.querySelector(`.assoc-termo[data-termo="${CSS.escape(termoSelecionado)}"]`);
+    if (prev && !paresAssociacao[termoSelecionado]) {
+      prev.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
+    }
+  }
+  termoSelecionado = termo;
+  el.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-blue-500 bg-blue-50 text-sm font-medium transition-all';
+}
+
+function selecionarConceito(el, conceito) {
+  if (!termoSelecionado || el.disabled) return;
+  // Faz o par
+  paresAssociacao[termoSelecionado] = conceito;
+  const termoEl = document.querySelector(`.assoc-termo[data-termo="${CSS.escape(termoSelecionado)}"]`);
+  if (termoEl) {
+    termoEl.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-green-500 bg-green-50 text-sm font-medium transition-all';
+  }
+  el.disabled  = true;
+  el.className = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-green-500 bg-green-50 text-sm transition-all opacity-80 cursor-not-allowed';
+  termoSelecionado = null;
+  atualizarStatusAssoc();
+}
+
+function atualizarStatusAssoc() {
+  const total = document.querySelectorAll('.assoc-termo').length;
+  const feitos = Object.keys(paresAssociacao).length;
+  const statusEl = document.getElementById('assoc-status');
+  if (statusEl) statusEl.innerText = `${feitos} de ${total} associados`;
+  const btn = document.getElementById('btn-confirmar-assoc');
+  if (!btn) return;
+  const pronto = feitos === total;
+  btn.disabled  = !pronto;
+  btn.className = `btn w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700${pronto ? '' : ' opacity-50 cursor-not-allowed'}`;
+}
+
+// ─── Timer da rodada (calculado localmente) ──────────────────────────────────
+
+function startTimerAluno(tempoInicial) {
+  localGameStart = Date.now();
+  initialTimeRemaining = tempoInicial;
+  if (timerAluno) clearInterval(timerAluno);
+  atualizarTimerLocal();
+  timerAluno = setInterval(atualizarTimerLocal, 500);
+}
+
+function atualizarTimerLocal() {
+  const elapsed  = Math.floor((Date.now() - localGameStart) / 1000);
+  const remaining = Math.max(0, initialTimeRemaining - elapsed);
+  const min = String(Math.floor(remaining / 60)).padStart(2, '0');
+  const sec = String(remaining % 60).padStart(2, '0');
+  const el  = document.getElementById('timer-aluno');
+  if (!el) return;
+  el.innerText = `${min}:${sec}`;
+  if (remaining <= 60 && remaining > 0) {
+    el.className = 'font-mono text-2xl font-bold tabular-nums timer-critico';
+  } else {
+    el.className = 'font-mono text-2xl font-bold text-blue-700 tabular-nums';
+  }
+  if (remaining <= 0) {
+    clearInterval(timerAluno);
+    bloquearJogoPorTempo();
+  }
 }
 
 function bloquearJogoPorTempo() {
-    // Disable all interactive elements
-    const allButtons = document.querySelectorAll('#jogo button');
-    allButtons.forEach(btn => btn.disabled = true);
-    const allInputs = document.querySelectorAll('#jogo input, #jogo select');
-    allInputs.forEach(input => input.disabled = true);
-
-    document.getElementById('opcoes').innerHTML = ''; // Clear options
-    document.getElementById('resultado').innerText = '';
-    document.getElementById('explicacao').innerText = '';
-    document.getElementById('proxima').style.display = 'none';
-    document.getElementById('pergunta').innerHTML = '<h3 class="text-red-600 text-2xl font-bold text-center py-8">Tempo Esgotado!</h3>';
-    
-    // Wait a bit before showing the final screen to let the user see the message
-    setTimeout(() => {
-        mostrarFim();
-    }, 2000);
+  document.querySelectorAll('#jogo button, #jogo input, #jogo select').forEach(el => el.disabled = true);
+  document.getElementById('opcoes').innerHTML = '';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('proxima').style.display = 'none';
+  document.getElementById('pergunta').innerHTML =
+    '<p class="text-red-600 text-2xl font-bold text-center py-8">⏰ Tempo Esgotado!</p>';
+  setTimeout(mostrarFim, 2000);
 }
 
-// --- Core Game Logic ---
-function verificarStatus() {
-  fetch('/api/status_jogo').then(r => r.json()).then(st => {
-    if (st.estado === "iniciado") {
-      document.getElementById('aguarde').style.display = 'none';
-      document.getElementById('inicio').style.display = 'block';
-      document.getElementById('numPerguntas').value = st.qtd_perguntas;
-      clearInterval(rankingInterval);
-      clearInterval(timerAluno);
-    } else {
-      document.getElementById('inicio').style.display = 'none';
-      document.getElementById('aguarde').style.display = 'block';
-      setTimeout(verificarStatus, 5000);
-    }
-  }).catch(() => {
-    setTimeout(verificarStatus, 5000);
-  });
-}
-
-window.onload = verificarStatus;
-
-function comecar() {
-  usuario = document.getElementById('usuario').value.trim();
-  if (!usuario) {
-    alert('Por favor, digite seu nome para começar!');
-    return;
-  }
-  
-  fetch('/api/verifica', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: -1, resposta: null, usuario })
-  }).then(r => r.json()).then(data => {
-    if (data.fim) {
-      alert("Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.");
-      window.location.reload();
-      return;
-    }
-    
-    fetch(`${API}/perguntas?usuario=${encodeURIComponent(usuario)}`).then(r => r.json()).then(qs => {
-      if (qs.erro) {
-        alert(qs.erro);
-        window.location.reload();
-        return;
-      }
-      perguntas = qs;
-      atual = 0; pontuacao = 0; acertos = 0; erros = 0;
-      
-      document.getElementById('inicio').style.display = 'none';
-      document.getElementById('jogo').style.display = 'block';
-      
-      document.getElementById('total-perguntas').innerText = perguntas.length;
-      initPerformanceChart();
-      fetchAndUpdateRanking(); 
-      rankingInterval = setInterval(fetchAndUpdateRanking, 10000);
-      
-      // Start the game and the timer
-      mostrarPergunta();
-      startTimerAluno(); 
-    });
-  });
-}
+// ─── Timer por questão ────────────────────────────────────────────────────────
 
 function iniciarCronometroQuestao() {
   tempoInicioPergunta = Date.now();
   if (timerQuestao) clearInterval(timerQuestao);
   const el = document.getElementById('timer-questao');
   timerQuestao = setInterval(() => {
-    const s = ((Date.now() - tempoInicioPergunta) / 1000).toFixed(1);
-    if (el) el.innerText = s + 's';
+    if (el) el.innerText = ((Date.now() - tempoInicioPergunta) / 1000).toFixed(1) + 's';
   }, 100);
 }
 
@@ -276,170 +368,362 @@ function pararCronometroQuestao() {
 }
 
 function getTempoResposta() {
-  if (!tempoInicioPergunta) return 30;
-  return (Date.now() - tempoInicioPergunta) / 1000;
+  return tempoInicioPergunta ? (Date.now() - tempoInicioPergunta) / 1000 : 30;
 }
 
+// ─── Fluxo principal ──────────────────────────────────────────────────────────
+
+function verificarStatus() {
+  fetch('/api/status_jogo')
+    .then(r => r.json())
+    .then(st => {
+      if (st.estado === 'iniciado') {
+        document.getElementById('aguarde').style.display = 'none';
+        document.getElementById('inicio').style.display  = 'block';
+        document.getElementById('numPerguntas').value    = st.qtd_perguntas;
+      } else {
+        document.getElementById('inicio').style.display  = 'none';
+        document.getElementById('aguarde').style.display = 'block';
+        setTimeout(verificarStatus, 3000);
+      }
+    })
+    .catch(() => setTimeout(verificarStatus, 5000));
+}
+
+window.onload = verificarStatus;
+
+function comecar() {
+  usuario = document.getElementById('usuario').value.trim();
+  if (!usuario) { alert('Por favor, digite seu nome para começar!'); return; }
+
+  // Verifica se já jogou
+  fetch('/api/verifica', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: -1, resposta: null, usuario })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.fim) {
+      alert('Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.');
+      window.location.reload();
+      return;
+    }
+    // Carrega perguntas e status em paralelo
+    Promise.all([
+      fetch(`${API}/perguntas?usuario=${encodeURIComponent(usuario)}`).then(r => r.json()),
+      fetch('/api/status_jogo').then(r => r.json())
+    ]).then(([qs, st]) => {
+      if (qs.erro) { alert(qs.erro); window.location.reload(); return; }
+      perguntas = qs;
+      atual = 0; pontuacao = 0; acertos = 0; erros = 0; historicoRespostas = [];
+      document.getElementById('inicio').style.display = 'none';
+      document.getElementById('jogo').style.display   = 'block';
+      document.getElementById('total-perguntas').innerText = perguntas.length;
+      initPerformanceChart();
+      fetchAndUpdateRanking();
+      rankingInterval = setInterval(fetchAndUpdateRanking, 10000);
+      mostrarPergunta();
+      startTimerAluno(st.tempo_restante || 600);
+    });
+  });
+}
+
+// ─── Lógica de pergunta ───────────────────────────────────────────────────────
+
 function mostrarPergunta() {
-  if (atual >= perguntas.length) {
-    mostrarFim();
-    return;
-  }
-  
-  document.getElementById('resultado').innerText = '';
+  if (atual >= perguntas.length) { mostrarFim(); return; }
+
+  // Limpa feedback
+  document.getElementById('resultado').innerText    = '';
   document.getElementById('pontos-feedback').innerText = '';
-  document.getElementById('explicacao').innerText = '';
-  document.getElementById('proxima').style.display = 'none';
-  
+  document.getElementById('explicacao').innerText   = '';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('proxima').style.display  = 'none';
+
   updateProgressBar();
-  
+
   const q = perguntas[atual];
   document.getElementById('pergunta-atual').innerText = atual + 1;
   document.getElementById('pergunta').innerHTML = q.pergunta;
 
-  // Badge de dificuldade
+  // Badge dificuldade
   const badge = document.getElementById('badge-dificuldade');
-  const dif = q.dificuldade || 'media';
+  const dif   = q.dificuldade || 'media';
   badge.textContent = DIFICULDADE_LABEL[dif] || dif;
-  badge.className = 'text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide ' + (DIFICULDADE_COR[dif] || '');
+  badge.className   = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest ' + (DIFICULDADE_COR[dif] || '');
 
-  // Inicia cronômetro da questão
   iniciarCronometroQuestao();
-  
+
   const opcoesDiv = document.getElementById('opcoes');
   opcoesDiv.innerHTML = '';
-  
+
   if (q.tipo === 'multipla_escolha') {
     q.opcoes.forEach((op, idx) => {
-      let btn = document.createElement('button');
-      btn.className = 'btn opcao-btn w-full text-left p-4 bg-slate-100 rounded-lg border border-slate-200 hover:bg-blue-500 hover:text-white';
-      btn.innerHTML = op;
+      const btn = document.createElement('button');
+      btn.className = 'opcao-btn btn w-full text-left flex items-center p-4 bg-slate-50 rounded-xl border border-slate-200 gap-3';
+      btn.dataset.idx = idx;
+      btn.innerHTML = `
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-600 font-bold text-sm shrink-0">
+          ${LETTERS[idx]}
+        </span>
+        <span>${op}</span>`;
       btn.onclick = () => responder(idx);
       opcoesDiv.appendChild(btn);
     });
+
   } else if (q.tipo === 'associacao') {
-    let termos = q.associacoes.map(a => a.termo);
-    let conceitos = q.associacoes.map(a => a.conceito);
-    conceitos = conceitos.sort(() => Math.random() - 0.5);
-    opcoesDiv.innerHTML = `<b class="text-slate-700">Associe cada termo ao conceito:</b><br>`;
-    termos.forEach((termo, i) => {
-      opcoesDiv.innerHTML += `<div class="flex items-center gap-4 my-2">${termo} → <select id="assoc${i}" class="w-full p-2 border border-slate-300 rounded-lg">` +
-        conceitos.map((c, j) => `<option value="${c}">${j + 1}: ${c}</option>`).join('') +
-        `</select></div>`;
+    const termos   = q.associacoes.map(a => a.termo);
+    const conceitos = [...q.associacoes.map(a => a.conceito)].sort(() => Math.random() - 0.5);
+    termoSelecionado = null;
+    paresAssociacao  = {};
+
+    opcoesDiv.innerHTML = `
+      <p class="text-sm font-semibold text-slate-600 mb-3">
+        Toque em um <span class="text-blue-600">Termo</span>, depois em um <span class="text-green-600">Conceito</span>.
+        Toque em um par verde para desfazê-lo.
+      </p>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="space-y-2 text-xs font-bold text-center text-slate-400 pb-1">Termos</div>
+        <div class="space-y-2 text-xs font-bold text-center text-slate-400 pb-1">Conceitos</div>
+        <div class="space-y-2" id="col-termos"></div>
+        <div class="space-y-2" id="col-conceitos"></div>
+      </div>
+      <p class="text-xs text-slate-400 mt-2 text-center" id="assoc-status">0 de ${termos.length} associados</p>`;
+
+    const colT = document.getElementById('col-termos');
+    const colC = document.getElementById('col-conceitos');
+
+    termos.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className  = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
+      btn.textContent = t;
+      btn.dataset.termo = t;
+      btn.onclick = () => selecionarTermo(btn, t);
+      colT.appendChild(btn);
     });
-    let btn = document.createElement('button');
-    btn.className = 'btn w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
-    btn.innerText = 'Responder';
-    btn.onclick = () => {
-      let resposta = termos.map((t, i) => ({ termo: t, conceito: document.getElementById('assoc' + i).value }));
+
+    conceitos.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className  = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm transition-all';
+      btn.textContent = c;
+      btn.dataset.conceito = c;
+      btn.onclick = () => selecionarConceito(btn, c);
+      colC.appendChild(btn);
+    });
+
+    const btnConfirm = document.createElement('button');
+    btnConfirm.id        = 'btn-confirmar-assoc';
+    btnConfirm.className = 'btn w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 opacity-50 cursor-not-allowed';
+    btnConfirm.innerText = 'Confirmar Associações';
+    btnConfirm.disabled  = true;
+    btnConfirm.onclick   = () => {
+      const resposta = Object.entries(paresAssociacao).map(([t, c]) => ({ termo: t, conceito: c }));
       responder(resposta);
     };
-    opcoesDiv.appendChild(btn);
-  } else if (q.tipo === 'resposta_aberta') {
-    opcoesDiv.innerHTML = `<input type="text" id="respAberta" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Digite sua resposta...">
-      <button class="btn w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="responder(document.getElementById('respAberta').value)">Responder</button>`;
+    opcoesDiv.appendChild(btnConfirm);
   }
 }
 
 function responder(resposta) {
-  const q = perguntas[atual];
+  const q            = perguntas[atual];
   const tempo_resposta = getTempoResposta();
   pararCronometroQuestao();
 
-  const optionButtons = document.querySelectorAll('.opcao-btn');
-  optionButtons.forEach(btn => btn.disabled = true);
-  if (q.tipo === 'resposta_aberta') document.querySelector('#opcoes button').disabled = true;
-  if (q.tipo === 'associacao') document.querySelector('#opcoes button').disabled = true;
+  // Desabilita tudo
+  document.querySelectorAll('.opcao-btn').forEach(b => b.disabled = true);
+  const confirmBtn = document.querySelector('#opcoes button:not(.opcao-btn)');
+  if (confirmBtn) confirmBtn.disabled = true;
 
   fetch(`${API}/verifica`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: q.id, resposta, usuario, tempo_resposta })
-  }).then(r => r.json()).then(data => {
+  })
+  .then(r => r.json())
+  .then(data => {
     if (data.fim) {
-      alert("Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.");
+      alert('Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.');
       window.location.reload();
       return;
     }
-    
+
+    playSound(data.correta ? 'acerto' : 'erro');
+
+    // Destaca opções corretas / erradas (múltipla escolha)
+    if (q.tipo === 'multipla_escolha') {
+      document.querySelectorAll('.opcao-btn').forEach(btn => {
+        const idx = parseInt(btn.dataset.idx);
+        if (idx === data.resposta_correta_display) {
+          btn.classList.add('correta');
+          btn.querySelector('span:first-child').className =
+            'inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-300 text-white font-bold text-sm shrink-0';
+        } else if (idx === resposta && !data.correta) {
+          btn.classList.add('errada');
+        }
+      });
+    }
+
+    // Feedback textual
+    const feedbackEl = document.getElementById('feedback');
+    feedbackEl.style.display = 'block';
+
     if (data.correta) {
-      document.getElementById('resultado').innerText = '✅ Correto!';
+      document.getElementById('resultado').innerHTML = '✅ Correto!';
       document.getElementById('resultado').className = 'text-2xl font-bold text-green-500';
       acertos++;
       const pfEl = document.getElementById('pontos-feedback');
       if (data.pontos_bonus > 0) {
-        pfEl.innerHTML = `<span class="text-green-600">+${data.pontos_ganhos} pts</span> <span class="text-slate-400 text-sm">(base ${data.pontos_base} + bônus velocidade ${data.pontos_bonus})</span>`;
+        pfEl.innerHTML = `<span class="text-green-600">+${data.pontos_ganhos} pts</span>
+          <span class="text-slate-400 text-sm"> (base ${data.pontos_base} + bônus ${data.pontos_bonus})</span>`;
       } else {
         pfEl.innerHTML = `<span class="text-green-600">+${data.pontos_ganhos} pts</span>`;
       }
     } else {
-      document.getElementById('resultado').innerText = '❌ Errado!';
+      document.getElementById('resultado').innerHTML = '❌ Errado!';
       document.getElementById('resultado').className = 'text-2xl font-bold text-red-500';
       document.getElementById('pontos-feedback').innerText = '';
       erros++;
     }
-    
+
+    document.getElementById('explicacao').innerHTML = data.explicacao || '';
     pontuacao = data.pontuacao;
     document.getElementById('pontuacao-atual').innerText = pontuacao;
-    document.getElementById('explicacao').innerHTML = data.explicacao || '';
     updatePerformanceChart();
     fetchAndUpdateRanking();
-    
-    if (atual + 1 === perguntas.length) {
-      document.getElementById('proxima').innerText = "Finalizar";
-    } else {
-      document.getElementById('proxima').innerText = "Próxima";
-    }
+
+    // Guarda no histórico para o gabarito
+    historicoRespostas.push({
+      numero:              atual + 1,
+      pergunta:            q.pergunta,
+      tipo:                q.tipo,
+      opcoes:              q.opcoes || null,
+      resposta_usuario:    resposta,
+      resposta_correta:    data.resposta_correta_display,
+      acertou:             data.correta,
+      pontos_ganhos:       data.pontos_ganhos || 0
+    });
+
+    document.getElementById('proxima').innerText =
+      (atual + 1 === perguntas.length) ? 'Ver Resultado →' : 'Próxima →';
     document.getElementById('proxima').style.display = 'block';
   });
 }
 
 function proxima() {
-  atual++;
-  mostrarPergunta();
+  const card = document.querySelector('#jogo .lg\\:col-span-2');
+  if (card) {
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateX(-22px)';
+    card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+    setTimeout(() => {
+      card.style.transition = '';
+      card.style.transform  = '';
+      card.style.opacity    = '';
+      atual++;
+      mostrarPergunta();
+      card.classList.add('slide-in-right');
+      setTimeout(() => card.classList.remove('slide-in-right'), 350);
+    }, 210);
+  } else {
+    atual++;
+    mostrarPergunta();
+  }
 }
 
+// ─── Tela final + gabarito ────────────────────────────────────────────────────
+
 function mostrarFim() {
-  clearInterval(timerAluno); // Stop the timer
+  clearInterval(timerAluno);
   clearInterval(rankingInterval);
-  document.getElementById('jogo').style.display = 'none';
+  pararCronometroQuestao();
+
+  document.getElementById('jogo').style.display  = 'none';
   document.getElementById('final').style.display = 'block';
-  document.getElementById('scoreFinal').innerHTML = `Sua pontuação final foi: <b class="text-blue-600">${pontuacao}</b>`;
-  
+
+  // Emoji conforme desempenho
+  const pct = perguntas.length > 0 ? acertos / perguntas.length : 0;
+  const emoji = pct >= 0.8 ? '🏆' : pct >= 0.6 ? '😄' : pct >= 0.4 ? '😐' : '😔';
+  document.getElementById('final-emoji').innerText = emoji;
+
+  document.getElementById('scoreFinal').innerHTML =
+    `Pontuação: <strong class="text-blue-600">${pontuacao} pts</strong>`;
+
+  document.getElementById('final-stats').innerHTML = `
+    <span class="bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full">✅ ${acertos} acertos</span>
+    <span class="bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full">❌ ${erros} erros</span>
+    <span class="bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full">📋 ${perguntas.length} perguntas</span>`;
+
   fetch('/api/finalizar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ usuario })
   });
+
+  renderGabarito();
 }
 
+function renderGabarito() {
+  if (historicoRespostas.length === 0) return;
+
+  let html = `<div class="border-t border-slate-200 pt-6">
+    <h3 class="text-lg font-bold text-slate-700 mb-4">📋 Gabarito da Rodada</h3>
+    <div class="space-y-3">`;
+
+  historicoRespostas.forEach(h => {
+    const cls   = h.acertou ? 'gab-acertou' : 'gab-errou';
+    const icon  = h.acertou ? '✅' : '❌';
+    let resUsuario = '', resCorreta = '';
+
+    if (h.tipo === 'multipla_escolha' && h.opcoes) {
+      resCorreta = h.opcoes[h.resposta_correta] || '—';
+      resUsuario = h.opcoes[h.resposta_usuario] || '—';
+    } else if (h.tipo === 'associacao') {
+      resCorreta = '(ver ordem correta abaixo)';
+      resUsuario = '';
+    } else {
+      resCorreta = String(h.resposta_correta || '—');
+      resUsuario = String(h.resposta_usuario || '—');
+    }
+
+    html += `<div class="gab-card ${cls}">
+      <p class="font-semibold text-sm text-slate-800">${icon} <span class="text-slate-500 font-normal">${h.numero}.</span> ${h.pergunta}</p>`;
+
+    if (!h.acertou && resUsuario) {
+      html += `<p class="text-xs mt-1 text-red-600">✗ Sua resposta: <em>${resUsuario}</em></p>`;
+    }
+    if (resCorreta && resCorreta !== '(ver ordem correta abaixo)') {
+      html += `<p class="text-xs mt-0.5 ${h.acertou ? 'text-green-700' : 'text-slate-600'}">
+        ✓ Correta: <strong>${resCorreta}</strong></p>`;
+    }
+    html += `<p class="text-xs mt-1 text-blue-500 font-semibold">+${h.pontos_ganhos} pts</p>
+    </div>`;
+  });
+
+  html += '</div></div>';
+  document.getElementById('gabarito').innerHTML = html;
+}
+
+// ─── Utilidades ───────────────────────────────────────────────────────────────
+
 function updateProgressBar() {
-  const percentage = (atual / perguntas.length) * 100;
-  document.getElementById('progress-bar').style.width = `${percentage}%`;
+  document.getElementById('progress-bar').style.width = `${(atual / perguntas.length) * 100}%`;
 }
 
 function initPerformanceChart() {
   const ctx = document.getElementById('performanceChart').getContext('2d');
-  if (performanceChart) {
-    performanceChart.destroy();
-  }
+  if (performanceChart) performanceChart.destroy();
   performanceChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Acertos', 'Erros'],
-      datasets: [{
-        label: 'Desempenho',
-        data: [acertos, erros],
-        backgroundColor: [ 'rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)' ],
-        borderColor: [ 'rgba(22, 163, 74, 1)', 'rgba(220, 38, 38, 1)' ],
-        borderWidth: 1
-      }]
+      datasets: [{ data: [0, 0],
+        backgroundColor: ['rgba(34,197,94,0.85)', 'rgba(239,68,68,0.85)'],
+        borderColor:     ['rgba(22,163,74,1)',    'rgba(220,38,38,1)'],
+        borderWidth: 1 }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: { legend: { position: 'bottom', }, tooltip: { enabled: true } }
-    }
+    options: { responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true } } }
   });
 }
 
@@ -451,43 +735,30 @@ function updatePerformanceChart() {
 }
 
 async function fetchAndUpdateRanking() {
-    try {
-        const response = await fetch('/api/ranking');
-        if (!response.ok) throw new Error('Failed to fetch ranking');
-        
-        const rankingData = await response.json();
-        const rankingList = document.getElementById('ranking-list');
-        rankingList.innerHTML = '';
-
-        if (rankingData && rankingData.length > 0) {
-            const sortedRanking = rankingData.sort((a, b) => b.pontuacao - a.pontuacao);
-            sortedRanking.slice(0, 5).forEach((player, index) => {
-                const li = document.createElement('li');
-                li.className = `flex justify-between items-center p-2 rounded-lg ${player.usuario === usuario ? 'bg-blue-100 font-bold' : ''}`;
-                
-                let rankIndicator = '';
-                if (index === 0) rankIndicator = '🥇';
-                else if (index === 1) rankIndicator = '🥈';
-                else if (index === 2) rankIndicator = '🥉';
-                else rankIndicator = `#${index + 1}`;
-
-                li.innerHTML = `
-                    <span class="flex items-center gap-3">
-                        <span class="w-6 text-center">${rankIndicator}</span>
-                        <span>${player.usuario}</span>
-                    </span>
-                    <span class="font-semibold">${player.pontuacao}</span>
-                `;
-                rankingList.appendChild(li);
-            });
-        } else {
-            rankingList.innerHTML = '<li class="text-center text-slate-500">Nenhum jogador no ranking ainda.</li>';
-        }
-    } catch (error) {
-        console.error("Could not update ranking:", error);
-        const rankingList = document.getElementById('ranking-list');
-        rankingList.innerHTML = '<li class="text-center text-red-500">Erro ao carregar o ranking.</li>';
+  try {
+    const data = await fetch('/api/ranking').then(r => r.json());
+    const list = document.getElementById('ranking-list');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<li class="text-center text-slate-400">Nenhum jogador ainda.</li>';
+      return;
     }
+    const medals = ['🥇', '🥈', '🥉'];
+    list.innerHTML = data
+      .sort((a, b) => b.pontuacao - a.pontuacao)
+      .slice(0, 5)
+      .map((p, i) => `
+        <li class="flex justify-between items-center p-2 rounded-lg ${p.usuario === usuario ? 'bg-blue-50 font-bold' : ''}">
+          <span class="flex items-center gap-2">
+            <span class="w-5 text-center">${medals[i] || '#' + (i+1)}</span>
+            <span class="truncate max-w-[120px]">${p.usuario}</span>
+          </span>
+          <span class="font-semibold text-blue-600 shrink-0">${p.pontuacao}</span>
+        </li>`)
+      .join('');
+  } catch {
+    document.getElementById('ranking-list').innerHTML =
+      '<li class="text-center text-red-400">Erro ao carregar.</li>';
+  }
 }
 </script>
 </body>

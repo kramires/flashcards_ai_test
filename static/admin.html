@@ -88,6 +88,22 @@
     <div id="dashboard" class="max-w-7xl mx-auto" style="display:none">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">Dashboard do Jogo</h1>
 
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="card text-center">
+                <p class="text-4xl font-bold text-yellow-500 tabular-nums" id="count-jogando">—</p>
+                <p class="text-sm font-medium text-gray-500 mt-1">🎮 Jogando</p>
+            </div>
+            <div class="card text-center">
+                <p class="text-4xl font-bold text-green-500 tabular-nums" id="count-finalizados">—</p>
+                <p class="text-sm font-medium text-gray-500 mt-1">✅ Finalizaram</p>
+            </div>
+            <div class="card text-center">
+                <p class="text-4xl font-bold text-blue-500 tabular-nums" id="count-total">—</p>
+                <p class="text-sm font-medium text-gray-500 mt-1">👥 Total</p>
+            </div>
+        </div>
+
         <!-- Controls -->
         <div class="card mb-6">
             <h3 class="text-xl font-semibold text-gray-700 mb-4">Controle da Rodada</h3>
@@ -102,7 +118,7 @@
                 </div>
                 <button class="btn btn-primary" onclick="iniciarJogo()">▶️ Iniciar Jogo</button>
                 <button class="btn btn-secondary" onclick="resetarJogo()">🔄 Resetar Jogo</button>
-                <a class="btn btn-neutral" href="/api/admin/exportar" target="_blank">Exportar CSV</a>
+                <button class="btn btn-neutral" onclick="exportarCSV()">Exportar CSV</button>
             </div>
         </div>
         
@@ -149,6 +165,14 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Per-question accuracy chart -->
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-1">📈 Taxa de Acerto por Questão</h3>
+                    <p class="text-xs text-gray-400 mb-4">Calculado a partir dos alunos que já finalizaram. Verde ≥ 70%, amarelo ≥ 40%, vermelho &lt; 40%.</p>
+                    <canvas id="questaoChart"></canvas>
+                    <p id="questao-chart-empty" class="text-gray-400 text-sm text-center py-4" style="display:none;">Aguardando finalizações para exibir o gráfico.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -161,7 +185,13 @@
 
 <script>
 // --- CONFIGURATION ---
-const SENHA = "prof123"; // Troque para sua senha
+const SENHA = "prof123"; // Troque para sua senha (deve coincidir com ADMIN_TOKEN no app.py)
+
+// Helper: fetch autenticado para rotas admin
+function adminFetch(url, options = {}) {
+    options.headers = Object.assign({}, options.headers, { 'X-Admin-Token': SENHA });
+    return fetch(url, options);
+}
 
 // --- STATE VARIABLES ---
 let dadosStatusAlunos = {};
@@ -171,6 +201,7 @@ let detalhesUltimoAluno = null;
 let detalhesUltimoGrupo = null;
 let rankingChart = null;
 let performanceChart = null;
+let questaoChart = null;
 
 // --- CORE FUNCTIONS ---
 function loginAdmin() {
@@ -201,10 +232,10 @@ function atualizarTudo() {
 function iniciarJogo() {
     const qtd = parseInt(document.getElementById('qtdPerguntas').value, 10);
     const tempo = parseInt(document.getElementById('tempoRodada').value, 10) * 60; // minutos para segundos
-    fetch('/api/admin/iniciar', {
+    adminFetch('/api/admin/iniciar', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({qtd_perguntas: qtd, tempo_limite: tempo}) // Add tempo_limite
+        body: JSON.stringify({qtd_perguntas: qtd, tempo_limite: tempo})
     }).then(r=>r.json()).then(()=>{
         showToast("Jogo liberado para os alunos!");
         setTimeout(() => { atualizarTudo(); }, 1200);
@@ -213,7 +244,7 @@ function iniciarJogo() {
 
 function resetarJogo() {
     if (confirm("Tem certeza que deseja resetar o jogo? Isso limpará todos os dados da rodada atual.")) {
-        fetch('/api/admin/resetar', {method: 'POST'}).then(r=>r.json()).then(()=>{
+        adminFetch('/api/admin/resetar', {method: 'POST'}).then(r=>r.json()).then(()=>{
             showToast("Jogo resetado. Alunos verão a tela de espera.");
             setTimeout(() => { atualizarTudo(); }, 1200);
         });
@@ -221,7 +252,7 @@ function resetarJogo() {
 }
 
 function carregarRanking() {
-    fetch('/api/ranking').then(r=>r.json()).then(rk=>{
+    fetch('/api/ranking').then(r=>r.json()).then(rk=>{  // ranking é público
         const medals = ['🥇', '🥈', '🥉'];
         let listHTML = rk.map((lin, index) => `
             <li class="flex justify-between items-center p-2 rounded-lg ${index < 3 ? 'bg-yellow-100' : ''}">
@@ -240,7 +271,7 @@ function carregarRanking() {
 }
 
 function carregarStatus() {
-    fetch('/api/admin/respostas').then(r=>r.json()).then(data=>{
+    adminFetch('/api/admin/respostas').then(r=>r.json()).then(data=>{
         dadosStatusAlunos = data;
         
         let f_html = data.finalizados.map(a=>`
@@ -257,9 +288,17 @@ function carregarStatus() {
 
         document.getElementById('finalizados').innerHTML = f_html || '<li class="text-gray-500">Nenhum aluno finalizou.</li>';
         document.getElementById('jogando').innerHTML = j_html || '<li class="text-gray-500">Nenhum aluno jogando.</li>';
-        
+
+        // Update stat cards
+        document.getElementById('count-jogando').innerText    = data.jogando.length;
+        document.getElementById('count-finalizados').innerText = data.finalizados.length;
+        document.getElementById('count-total').innerText      = data.jogando.length + data.finalizados.length;
+
         // Update performance chart
         atualizarGraficoPerformance(data.finalizados);
+
+        // Update per-question chart
+        atualizarGraficoQuestoes(data.finalizados);
         
         // This is needed to refresh modal data if it's open
         if (detalhesVisivel && detalhesUltimoAluno) {
@@ -344,6 +383,27 @@ function inicializarDashboard() {
         options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
     });
 
+    // Initialize Per-question Chart
+    const qtx = document.getElementById('questaoChart').getContext('2d');
+    questaoChart = new Chart(qtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: '% Acertos',
+                data: [],
+                backgroundColor: [],
+                borderColor: [],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } },
+            scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+    });
+
     // Initialize Performance Chart
     const ptx = document.getElementById('performanceChart').getContext('2d');
     performanceChart = new Chart(ptx, {
@@ -384,6 +444,41 @@ function atualizarGraficoPerformance(finalizadosData) {
     performanceChart.update();
 }
 
+function atualizarGraficoQuestoes(finalizadosData) {
+    if (!questaoChart) return;
+    const emptyMsg = document.getElementById('questao-chart-empty');
+
+    if (finalizadosData.length === 0) {
+        questaoChart.data.labels = [];
+        questaoChart.data.datasets[0].data = [];
+        questaoChart.update();
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    // Agrega acertos por questão
+    const stats = {};
+    finalizadosData.forEach(aluno => {
+        (aluno.respostas || []).forEach(r => {
+            if (!stats[r.id]) stats[r.id] = { acertos: 0, total: 0 };
+            stats[r.id].total++;
+            if (r.acertou) stats[r.id].acertos++;
+        });
+    });
+
+    const ids  = Object.keys(stats).sort((a, b) => Number(a) - Number(b));
+    const pcts = ids.map(id => Math.round((stats[id].acertos / stats[id].total) * 100));
+    const bg   = pcts.map(p => p >= 70 ? 'rgba(22,163,74,0.75)' : p >= 40 ? 'rgba(234,179,8,0.75)' : 'rgba(239,68,68,0.75)');
+    const border = pcts.map(p => p >= 70 ? 'rgba(22,163,74,1)' : p >= 40 ? 'rgba(202,138,4,1)' : 'rgba(220,38,38,1)');
+
+    questaoChart.data.labels                          = ids.map(id => 'Q' + id);
+    questaoChart.data.datasets[0].data                = pcts;
+    questaoChart.data.datasets[0].backgroundColor     = bg;
+    questaoChart.data.datasets[0].borderColor          = border;
+    questaoChart.update();
+}
+
 function atualizarTimerRodada() {
     fetch('/api/status_jogo').then(r=>r.json()).then(st=>{
         const timerEl = document.getElementById('timer-rodada');
@@ -407,6 +502,23 @@ function atualizarTimerRodada() {
             timerEl.classList.remove('text-red-500');
         }
     });
+}
+
+function exportarCSV() {
+    adminFetch('/api/admin/exportar')
+        .then(r => {
+            if (!r.ok) { showToast('Erro ao exportar.'); return null; }
+            return r.blob();
+        })
+        .then(blob => {
+            if (!blob) return;
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href     = url;
+            link.download = 'resultado_flashcards.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
 }
 
 // Utility for showing a temporary message

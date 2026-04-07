@@ -1,13 +1,29 @@
 from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_cors import CORS
+from functools import wraps
 import json
+import os
 import random
 import csv
 import io
 import time
+import threading
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
+
+# ─── Autenticação de rotas admin ─────────────────────────────────────────────
+ADMIN_TOKEN = "prof123"   # Altere para uma senha segura
+
+def requer_token_admin(f):
+    """Decorator: exige header X-Admin-Token com a senha do professor."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('X-Admin-Token', '')
+        if token != ADMIN_TOKEN:
+            return jsonify({"erro": "Não autorizado."}), 401
+        return f(*args, **kwargs)
+    return decorated
 
 # --- Carrega perguntas do arquivo JSON ---
 with open('questoes.json', 'r', encoding='utf-8') as f:
@@ -24,6 +40,43 @@ pontuacao_alunos = {}
 alunos_que_jogaram = set()
 alunos_info = {}  # {usuario: {"status":..., "pontuacao":..., "respostas": [...], "tempo_gasto":...} }
 
+# ─── Persistência em arquivo JSON ────────────────────────────────────────────
+DADOS_FILE = 'dados_rodada.json'
+_save_lock = threading.Lock()
+
+def salvar_estado():
+    """Persiste o estado da rodada em arquivo JSON."""
+    with _save_lock:
+        estado = {
+            'status_jogo':         status_jogo,
+            'pontuacao_alunos':    pontuacao_alunos,
+            'alunos_que_jogaram':  list(alunos_que_jogaram),
+            'alunos_info':         alunos_info
+        }
+        try:
+            with open(DADOS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(estado, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            app.logger.warning(f'Erro ao salvar estado: {e}')
+
+def carregar_estado():
+    """Restaura o estado a partir do arquivo JSON, se existir."""
+    global status_jogo, pontuacao_alunos, alunos_que_jogaram, alunos_info
+    if not os.path.exists(DADOS_FILE):
+        return
+    try:
+        with open(DADOS_FILE, 'r', encoding='utf-8') as f:
+            estado = json.load(f)
+        status_jogo.update(estado.get('status_jogo', {}))
+        pontuacao_alunos.update(estado.get('pontuacao_alunos', {}))
+        alunos_que_jogaram.update(estado.get('alunos_que_jogaram', []))
+        alunos_info.update(estado.get('alunos_info', {}))
+        app.logger.info(f'Estado da rodada restaurado de {DADOS_FILE}')
+    except Exception as e:
+        app.logger.warning(f'Erro ao carregar estado: {e}')
+
+carregar_estado()
+
 @app.route('/')
 def home():
     return send_from_directory('static', 'index.html')
@@ -38,14 +91,17 @@ def static_files(filename):
 
 @app.route('/api/status_jogo')
 def get_status_jogo():
+    # Remove questoes_rodada (contém gabarito) do endpoint público
+    safe = {k: v for k, v in status_jogo.items() if k != 'questoes_rodada'}
     if status_jogo["estado"] == "iniciado":
         tempo_decorrido = int(time.time()) - status_jogo["timestamp_inicio"]
         tempo_restante = max(0, status_jogo["tempo_limite"] - tempo_decorrido)
-        return jsonify({**status_jogo, "tempo_restante": tempo_restante})
+        return jsonify({**safe, "tempo_restante": tempo_restante})
     else:
-        return jsonify(status_jogo)
+        return jsonify(safe)
 
 @app.route('/api/admin/iniciar', methods=['POST'])
+@requer_token_admin
 def iniciar_jogo():
     global status_jogo, pontuacao_alunos, alunos_que_jogaram, alunos_info
     dados = request.json
@@ -64,9 +120,11 @@ def iniciar_jogo():
     pontuacao_alunos.clear()
     alunos_que_jogaram.clear()
     alunos_info.clear()
+    salvar_estado()
     return jsonify({"ok": True})
 
 @app.route('/api/admin/resetar', methods=['POST'])
+@requer_token_admin
 def resetar_jogo():
     global status_jogo, pontuacao_alunos, alunos_que_jogaram, alunos_info
     status_jogo = {
@@ -79,6 +137,7 @@ def resetar_jogo():
     pontuacao_alunos.clear()
     alunos_que_jogaram.clear()
     alunos_info.clear()
+    salvar_estado()
     return jsonify({"ok": True})
 
 @app.route('/api/perguntas', methods=['GET'])
@@ -193,13 +252,25 @@ def verifica_resposta():
         "pontos_bonus": pontos_bonus
     })
 
+    # Gabarito para exibição no frontend (revelado só após responder)
+    tipo = questao['tipo']
+    if tipo == 'multipla_escolha':
+        resposta_correta_display = questao.get('resposta_correta')
+    elif tipo == 'associacao':
+        resposta_correta_display = questao.get('associacoes')
+    else:
+        rc = questao.get('resposta_correta', '')
+        resposta_correta_display = rc[0] if isinstance(rc, list) else rc
+
+    salvar_estado()
     return jsonify({
         "correta": correta,
         "explicacao": questao.get('explicacao', ""),
         "pontuacao": pontuacao_alunos[usuario],
         "pontos_ganhos": pontos_ganhos,
         "pontos_base": pontos_base,
-        "pontos_bonus": pontos_bonus
+        "pontos_bonus": pontos_bonus,
+        "resposta_correta_display": resposta_correta_display
     })
 
 @app.route('/api/finalizar', methods=['POST'])
@@ -221,6 +292,7 @@ def finalizar_partida():
             "respostas": [],
             "tempo_gasto": tempo_gasto
         }
+    salvar_estado()
     return jsonify({"ok": True})
 
 @app.route('/api/ranking', methods=['GET'])
@@ -239,6 +311,7 @@ def ranking():
     return jsonify(lista)
 
 @app.route('/api/admin/respostas')
+@requer_token_admin
 def admin_respostas():
     """Retorna lista de todos os alunos, status, pontuação, tempo e respostas."""
     finalizados = []
@@ -258,6 +331,7 @@ def admin_respostas():
     return jsonify({"finalizados": finalizados, "jogando": jogando})
 
 @app.route('/api/admin/exportar')
+@requer_token_admin
 def admin_exportar():
     """Exporta resultados em CSV"""
     output = io.StringIO()
