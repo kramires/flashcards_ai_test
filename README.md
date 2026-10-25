@@ -66,8 +66,8 @@ python app.py
 
 Acesse via navegador:
 
-* **Professor:** `http://SEU_IP_LOCAL:8080/admin`
-* **Aluno:** `http://SEU_IP_LOCAL:8080/`
+* **Professor:** `http://SEU_IP_LOCAL:9527/admin`
+* **Aluno:** `http://SEU_IP_LOCAL:9527/`
 
 ## Estrutura dos arquivos
 

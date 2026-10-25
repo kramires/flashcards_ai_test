@@ -3,427 +3,522 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Professor - Jogo de Flashcards</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Painel do Professor — Flashcards IA</title>
+    <link rel="stylesheet" href="/vendor/tailwind.css">
+    <link rel="stylesheet" href="/estilo.css">
+    <!-- Chart.js local (o painel roda no computador do professor) -->
+    <script src="/vendor/chart.umd.js"></script>
     <style>
-        /* Custom styles for a better look and feel */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-        }
-        .card {
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            padding: 1.5rem;
-            transition: all 0.3s ease-in-out;
-        }
-        .btn {
-            padding: 0.6rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-primary { background-color: #2563eb; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-secondary { background-color: #ef4444; }
-        .btn-secondary:hover { background-color: #dc2626; }
-        .btn-neutral { background-color: #64748b; }
-        .btn-neutral:hover { background-color: #475569; }
-        .btn-details { background-color: #0ea5e9; font-size: 0.8em; padding: 0.25rem 0.75rem; }
-        .btn-details:hover { background-color: #0284c7; }
-
-        /* Modal styles */
         #modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 40;
-            display: none; /* Hidden by default */
+            position: fixed; inset: 0; z-index: 40;
+            background: rgba(15, 23, 42, .45);
+            backdrop-filter: blur(2px);
+            display: none;
         }
         #modal-content {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 50;
-            max-height: 90vh;
-            overflow-y: auto;
-            display: none; /* Hidden by default */
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 50; max-height: 88vh; overflow-y: auto;
+            display: none;
         }
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
+        .stat-valor { font-size: 2rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+        .ponto { width: .5rem; height: .5rem; border-radius: 50%; display: inline-block; }
+        .tabela th { font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: .6rem .75rem; text-align: left; }
+        .tabela td { padding: .6rem .75rem; border-top: 1px solid #f1f5f9; }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="p-4 sm:p-6 md:p-8">
+<body class="min-h-screen">
 
-    <!-- Login Screen -->
-    <div id="login" class="max-w-md mx-auto mt-10">
-        <div class="card">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Painel do Professor</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="senha" class="block text-sm font-medium text-gray-700">Senha do professor:</label>
-                    <input type="password" id="senha" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <button class="btn btn-primary w-full" onclick="loginAdmin()">Entrar</button>
-                <div id="msgerr" class="text-red-600 text-sm text-center h-5"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Dashboard Screen -->
-    <div id="dashboard" class="max-w-7xl mx-auto" style="display:none">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Dashboard do Jogo</h1>
-
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-3 gap-4 mb-6">
-            <div class="card text-center">
-                <p class="text-4xl font-bold text-yellow-500 tabular-nums" id="count-jogando">—</p>
-                <p class="text-sm font-medium text-gray-500 mt-1">🎮 Jogando</p>
-            </div>
-            <div class="card text-center">
-                <p class="text-4xl font-bold text-green-500 tabular-nums" id="count-finalizados">—</p>
-                <p class="text-sm font-medium text-gray-500 mt-1">✅ Finalizaram</p>
-            </div>
-            <div class="card text-center">
-                <p class="text-4xl font-bold text-blue-500 tabular-nums" id="count-total">—</p>
-                <p class="text-sm font-medium text-gray-500 mt-1">👥 Total</p>
-            </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="card mb-6">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Controle da Rodada</h3>
-            <div class="flex flex-wrap items-center gap-4">
-                <div>
-                    <label for="qtdPerguntas" class="text-sm font-medium text-gray-600">Nº de perguntas:</label>
-                    <input type="number" id="qtdPerguntas" min="1" max="20" value="5" class="w-20 mt-1 px-2 py-1 border border-gray-300 rounded-md">
+    <!-- Login -->
+    <section id="login" class="min-h-screen flex items-center justify-center px-4 py-8">
+        <div class="card p-7 w-full max-w-sm">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.17a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 9.17 4.17a2 2 0 0 0 1.66 0L22 17"/></svg>
                 </div>
                 <div>
-                    <label for="tempoRodada" class="text-sm font-medium text-gray-600">Tempo (minutos):</label>
-                    <input type="number" id="tempoRodada" min="1" max="60" value="10" class="w-20 mt-1 px-2 py-1 border border-gray-300 rounded-md">
-                </div>
-                <button class="btn btn-primary" onclick="iniciarJogo()">▶️ Iniciar Jogo</button>
-                <button class="btn btn-secondary" onclick="resetarJogo()">🔄 Resetar Jogo</button>
-                <button class="btn btn-neutral" onclick="exportarCSV()">Exportar CSV</button>
-            </div>
-        </div>
-        
-        <!-- Timer Display -->
-        <div class="card mb-6 text-center">
-            <h3 class="text-xl font-semibold text-gray-700">
-                ⏳ Tempo Restante: <span id="timer-rodada" class="text-2xl font-bold text-blue-600 tabular-nums">--:--</span>
-            </h3>
-        </div>
-
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- Ranking Column -->
-            <div class="lg:col-span-1 space-y-6">
-                <div class="card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">🏆 Ranking Atual</h3>
-                    <ul id="ranking-list" class="space-y-2"></ul>
-                </div>
-                <div class="card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">⭐ Top 5 Jogadores</h3>
-                    <canvas id="rankingChart"></canvas>
+                    <h1 class="font-semibold text-slate-900 leading-tight">Flashcards IA</h1>
+                    <p class="text-sm text-slate-500">Painel do professor</p>
                 </div>
             </div>
+            <label for="senha" class="label">Senha</label>
+            <input type="password" id="senha" class="field" autocomplete="current-password"
+                onkeydown="if (event.key === 'Enter') loginAdmin()">
+            <p id="msgerr" class="text-sm text-red-600 mt-2 min-h-[1.25rem]"></p>
+            <button class="btn btn-primary w-full mt-2" onclick="loginAdmin()">Entrar</button>
+        </div>
+    </section>
 
-            <!-- Status & Performance Column -->
-            <div class="lg:col-span-2 space-y-6">
-                <div class="card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">📊 Desempenho Geral (Finalizados)</h3>
-                    <div class="max-w-sm mx-auto">
-                        <canvas id="performanceChart"></canvas>
+    <!-- Dashboard -->
+    <div id="dashboard" style="display:none">
+
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.17a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 9.17 4.17a2 2 0 0 0 1.66 0L22 17"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-slate-900 leading-tight">Flashcards IA</p>
+                    <p class="text-xs text-slate-500">Painel do professor</p>
+                </div>
+                <div class="ml-auto flex items-center gap-3">
+                    <span id="estado-rodada" class="chip bg-slate-100 text-slate-600">Aguardando</span>
+                    <div id="timer-pill" class="timer-pill text-lg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span id="timer-rodada">--:--</span>
                     </div>
                 </div>
-                <div class="card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">🏃 Status dos Alunos</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+            <!-- Controle + link -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <section class="card p-5 lg:col-span-2">
+                    <h2 class="font-semibold text-slate-900">Controle da rodada</h2>
+                    <p class="text-sm text-slate-500 mt-0.5 mb-4">Defina a rodada e libere para os alunos. Iniciar uma nova rodada apaga os resultados da atual.</p>
+                    <div class="flex flex-wrap items-end gap-3">
                         <div>
-                            <h4 class="font-semibold text-green-600 mb-2">✅ Finalizaram</h4>
-                            <ul id="finalizados" class="space-y-2 text-sm"></ul>
+                            <label for="qtdPerguntas" class="label">Questões</label>
+                            <input type="number" id="qtdPerguntas" min="1" max="30" value="5" class="field w-28">
                         </div>
                         <div>
-                            <h4 class="font-semibold text-yellow-600 mb-2">🎮 Jogando</h4>
-                            <ul id="jogando" class="space-y-2 text-sm"></ul>
+                            <label for="tempoRodada" class="label">Tempo (min)</label>
+                            <input type="number" id="tempoRodada" min="1" max="60" value="10" class="field w-28">
+                        </div>
+                        <button class="btn btn-primary btn-lg" onclick="iniciarJogo()">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                            Iniciar rodada
+                        </button>
+                        <div class="flex gap-2 sm:ml-auto">
+                            <button class="btn btn-outline" onclick="exportarCSV()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Exportar CSV
+                            </button>
+                            <button class="btn btn-danger" onclick="resetarJogo()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                Resetar
+                            </button>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Per-question accuracy chart -->
-                <div class="card">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-1">📈 Taxa de Acerto por Questão</h3>
-                    <p class="text-xs text-gray-400 mb-4">Calculado a partir dos alunos que já finalizaram. Verde ≥ 70%, amarelo ≥ 40%, vermelho &lt; 40%.</p>
-                    <canvas id="questaoChart"></canvas>
-                    <p id="questao-chart-empty" class="text-gray-400 text-sm text-center py-4" style="display:none;">Aguardando finalizações para exibir o gráfico.</p>
+                <section class="card p-5 flex flex-col">
+                    <h2 class="font-semibold text-slate-900">Link para os alunos</h2>
+                    <p class="text-sm text-slate-500 mt-0.5 mb-4">Celulares na mesma rede Wi-Fi deste computador.</p>
+                    <div class="mt-auto rounded-xl bg-indigo-50 border border-indigo-100 pl-4 pr-2 py-3 flex items-center gap-2">
+                        <code id="link-alunos" class="flex-1 text-lg font-semibold text-indigo-900 break-all">—</code>
+                        <button class="icon-btn" onclick="copiarLink()" title="Copiar link" aria-label="Copiar link">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Indicadores -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="card p-5">
+                    <p class="eyebrow flex items-center gap-2"><span class="ponto bg-amber-500"></span>Jogando</p>
+                    <p class="stat-valor mt-3" id="count-jogando">—</p>
+                </div>
+                <div class="card p-5">
+                    <p class="eyebrow flex items-center gap-2"><span class="ponto bg-green-600"></span>Finalizaram</p>
+                    <p class="stat-valor mt-3" id="count-finalizados">—</p>
+                </div>
+                <div class="card p-5">
+                    <p class="eyebrow flex items-center gap-2"><span class="ponto bg-indigo-600"></span>Total de alunos</p>
+                    <p class="stat-valor mt-3" id="count-total">—</p>
+                </div>
+                <div class="card p-5">
+                    <p class="eyebrow flex items-center gap-2"><span class="ponto bg-slate-400"></span>Taxa de acerto</p>
+                    <p class="stat-valor mt-3" id="stat-taxa">—</p>
                 </div>
             </div>
-        </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Ranking -->
+                <section class="card p-5 lg:row-span-2">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-semibold text-slate-900">Ranking</h2>
+                        <span class="text-xs text-slate-400">Pontos · desempate por tempo</span>
+                    </div>
+                    <ol id="ranking-list" class="space-y-1"></ol>
+                </section>
+
+                <!-- Acerto por questão -->
+                <section class="card p-5 lg:col-span-2">
+                    <div class="flex flex-wrap items-start justify-between gap-2 mb-4">
+                        <div>
+                            <h2 class="font-semibold text-slate-900">Taxa de acerto por questão</h2>
+                            <p class="text-sm text-slate-500 mt-0.5">Alunos que já finalizaram.</p>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-slate-500">
+                            <span class="flex items-center gap-1.5"><span class="ponto bg-green-600"></span>≥ 70%</span>
+                            <span class="flex items-center gap-1.5"><span class="ponto bg-amber-500"></span>40–69%</span>
+                            <span class="flex items-center gap-1.5"><span class="ponto bg-red-500"></span>&lt; 40%</span>
+                        </div>
+                    </div>
+                    <div id="questao-chart-wrap" class="h-64"><canvas id="questaoChart"></canvas></div>
+                    <p id="questao-chart-empty" class="text-sm text-slate-400 text-center py-16" style="display:none;">Aguardando alunos finalizarem para exibir o gráfico.</p>
+                </section>
+
+                <section class="card p-5">
+                    <h2 class="font-semibold text-slate-900 mb-4">Top 5</h2>
+                    <div class="h-56"><canvas id="rankingChart"></canvas></div>
+                </section>
+
+                <section class="card p-5">
+                    <h2 class="font-semibold text-slate-900 mb-4">Acertos e erros (finalizados)</h2>
+                    <div class="h-56"><canvas id="performanceChart"></canvas></div>
+                </section>
+
+                <!-- Alunos -->
+                <section class="card p-5 lg:col-span-3">
+                    <h2 class="font-semibold text-slate-900 mb-4">Alunos</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <div>
+                            <p class="eyebrow flex items-center gap-2 mb-1"><span class="ponto bg-green-600"></span>Finalizaram</p>
+                            <ul id="finalizados" class="divide-y divide-slate-100"></ul>
+                        </div>
+                        <div>
+                            <p class="eyebrow flex items-center gap-2 mb-1"><span class="ponto bg-amber-500"></span>Jogando</p>
+                            <ul id="jogando" class="divide-y divide-slate-100"></ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
     </div>
 
-    <!-- Modal for Student Details -->
+    <!-- Modal de detalhes do aluno -->
     <div id="modal-overlay" onclick="fecharDetalhes()"></div>
-    <div id="modal-content" class="card w-11/12 max-w-2xl">
+    <div id="modal-content" class="card w-[92%] max-w-3xl">
         <div id="detalhesAluno"></div>
     </div>
 
 <script>
-// --- CONFIGURATION ---
-const SENHA = "prof123"; // Troque para sua senha (deve coincidir com ADMIN_TOKEN no app.py)
+// A senha NÃO fica no código-fonte; é capturada no login e validada pelo servidor.
+let adminToken = '';
 
-// Helper: fetch autenticado para rotas admin
 function adminFetch(url, options = {}) {
-    options.headers = Object.assign({}, options.headers, { 'X-Admin-Token': SENHA });
+    options.headers = Object.assign({}, options.headers, { 'X-Admin-Token': adminToken });
     return fetch(url, options);
 }
 
-// --- STATE VARIABLES ---
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString('pt-BR'); }
+
+function fmtTempo(s) {
+    if (s === null || s === undefined) return '';
+    return `${Math.floor(s / 60)}min ${String(s % 60).padStart(2, '0')}s`;
+}
+
+const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const COR = { brand: '#4f46e5', ok: '#16a34a', okSuave: '#86efac', erro: '#fca5a5', amarelo: '#f59e0b', vermelho: '#ef4444' };
+
+// --- ESTADO ---
 let dadosStatusAlunos = {};
-let timerAtualiza = null;
-let detalhesVisivel = false;
+let timerAtualiza     = null;
+let detalhesVisivel   = false;
 let detalhesUltimoAluno = null;
 let detalhesUltimoGrupo = null;
-let rankingChart = null;
-let performanceChart = null;
-let questaoChart = null;
+let totalAlunos = 0;
+let rankingChart = null, performanceChart = null, questaoChart = null;
 
-// --- CORE FUNCTIONS ---
+// Timer local da rodada (admin — mesmo padrão do index.html)
+let localAdminStart       = null;
+let initialAdminRemaining = null;
+let timerAdminLocal       = null;
+
+// --- LOGIN (validação server-side — senha não fica no fonte) ---
 function loginAdmin() {
-    let s = document.getElementById('senha').value;
-    if (s === SENHA) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        inicializarDashboard();
-        atualizarTudo();
-        timerAtualiza = setInterval(atualizarTudo, 5000); // Update more frequently for timer
-    } else {
-        const msgErrEl = document.getElementById('msgerr');
-        msgErrEl.innerText = "Senha incorreta!";
-        setTimeout(() => { msgErrEl.innerText = ""; }, 3000);
-    }
+    const s = document.getElementById('senha').value;
+    const msgErrEl = document.getElementById('msgerr');
+    fetch('/api/admin/respostas', { headers: { 'X-Admin-Token': s } })
+        .then(r => {
+            if (r.ok) {
+                adminToken = s;
+                document.getElementById('login').style.display     = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                inicializarDashboard();
+                atualizarTudo();
+                timerAtualiza = setInterval(atualizarTudo, 5000);
+            } else {
+                msgErrEl.innerText = 'Senha incorreta.';
+                setTimeout(() => { msgErrEl.innerText = ''; }, 3000);
+            }
+        })
+        .catch(() => { msgErrEl.innerText = 'Erro de conexão.'; });
 }
 
-function atualizarTudo() {
-    carregarRanking();
-    carregarStatus();
-    atualizarTimerRodada();
-    // Re-render details if modal was open
-    if (detalhesVisivel && detalhesUltimoAluno) {
-        detalharAluno(detalhesUltimoAluno, detalhesUltimoGrupo, true);
-    }
-}
-
+// --- CONTROLES DA RODADA ---
 function iniciarJogo() {
-    const qtd = parseInt(document.getElementById('qtdPerguntas').value, 10);
-    const tempo = parseInt(document.getElementById('tempoRodada').value, 10) * 60; // minutos para segundos
+    if (totalAlunos > 0 && !confirm('Iniciar uma nova rodada apaga os resultados da rodada atual. Continuar?')) return;
+    const qtd   = parseInt(document.getElementById('qtdPerguntas').value, 10);
+    const tempo = parseInt(document.getElementById('tempoRodada').value, 10) * 60;
     adminFetch('/api/admin/iniciar', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({qtd_perguntas: qtd, tempo_limite: tempo})
-    }).then(r=>r.json()).then(()=>{
-        showToast("Jogo liberado para os alunos!");
-        setTimeout(() => { atualizarTudo(); }, 1200);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qtd_perguntas: qtd, tempo_limite: tempo })
+    }).then(r => r.json()).then(() => {
+        showToast('Rodada liberada para os alunos.');
+        setTimeout(atualizarTudo, 600);
     });
 }
 
 function resetarJogo() {
-    if (confirm("Tem certeza que deseja resetar o jogo? Isso limpará todos os dados da rodada atual.")) {
-        adminFetch('/api/admin/resetar', {method: 'POST'}).then(r=>r.json()).then(()=>{
-            showToast("Jogo resetado. Alunos verão a tela de espera.");
-            setTimeout(() => { atualizarTudo(); }, 1200);
+    if (confirm('Resetar o jogo? Isso apaga todos os dados da rodada atual.')) {
+        adminFetch('/api/admin/resetar', { method: 'POST' }).then(r => r.json()).then(() => {
+            showToast('Jogo resetado. Os alunos verão a tela de espera.');
+            setTimeout(atualizarTudo, 600);
         });
     }
 }
 
-function carregarRanking() {
-    fetch('/api/ranking').then(r=>r.json()).then(rk=>{  // ranking é público
-        const medals = ['🥇', '🥈', '🥉'];
-        let listHTML = rk.map((lin, index) => `
-            <li class="flex justify-between items-center p-2 rounded-lg ${index < 3 ? 'bg-yellow-100' : ''}">
-                <span class="font-medium text-gray-700">
-                    ${medals[index] || (index + 1) + '.'} ${lin.usuario}
-                </span>
-                <span class="font-bold text-blue-600">${lin.pontuacao} pts</span>
-            </li>
-        `).join('');
-        
-        document.getElementById('ranking-list').innerHTML = listHTML || '<li class="text-gray-500">Ninguém no ranking ainda.</li>';
-        
-        // Update ranking chart
-        atualizarGraficoRanking(rk);
-    });
+function copiarLink() {
+    const texto = document.getElementById('link-alunos').textContent;
+    // navigator.clipboard só existe em HTTPS/localhost; em http://IP usa o método antigo
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(texto).then(() => showToast('Link copiado.'));
+        return;
+    }
+    const tmp = document.createElement('textarea');
+    tmp.value = texto;
+    document.body.appendChild(tmp);
+    tmp.select();
+    try { document.execCommand('copy'); showToast('Link copiado.'); } catch (_) {}
+    tmp.remove();
 }
 
-function carregarStatus() {
-    adminFetch('/api/admin/respostas').then(r=>r.json()).then(data=>{
-        dadosStatusAlunos = data;
-        
-        let f_html = data.finalizados.map(a=>`
-            <li class="flex justify-between items-center">
-                <span>${a.usuario} - <strong>${a.pontuacao} pts</strong></span>
-                <button class="btn btn-details" onclick="detalharAluno('${a.usuario}','finalizados')">Detalhes</button>
-            </li>`).join('');
-        
-        let j_html = data.jogando.map(a=>`
-            <li class="flex justify-between items-center">
-                <span>${a.usuario}</span>
-                 <button class="btn btn-details" onclick="detalharAluno('${a.usuario}','jogando')">Detalhes</button>
-            </li>`).join('');
+// --- TIMER LOCAL (admin) ---
+function startAdminTimer(tempoRestante) {
+    localAdminStart       = Date.now();
+    initialAdminRemaining = tempoRestante;
+    if (timerAdminLocal) clearInterval(timerAdminLocal);
+    atualizarTimerAdminLocal();
+    timerAdminLocal = setInterval(atualizarTimerAdminLocal, 500);
+}
 
-        document.getElementById('finalizados').innerHTML = f_html || '<li class="text-gray-500">Nenhum aluno finalizou.</li>';
-        document.getElementById('jogando').innerHTML = j_html || '<li class="text-gray-500">Nenhum aluno jogando.</li>';
+function atualizarTimerAdminLocal() {
+    const elapsed   = Math.floor((Date.now() - localAdminStart) / 1000);
+    const remaining = Math.max(0, initialAdminRemaining - elapsed);
+    const min = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const sec = String(remaining % 60).padStart(2, '0');
+    document.getElementById('timer-rodada').textContent = `${min}:${sec}`;
+    document.getElementById('timer-pill').classList.toggle('critico', remaining <= 60 && remaining > 0);
+    if (remaining <= 0) { clearInterval(timerAdminLocal); timerAdminLocal = null; }
+}
 
-        // Update stat cards
-        document.getElementById('count-jogando').innerText    = data.jogando.length;
-        document.getElementById('count-finalizados').innerText = data.finalizados.length;
-        document.getElementById('count-total').innerText      = data.jogando.length + data.finalizados.length;
+function atualizarEstadoRodada(st) {
+    const el = document.getElementById('estado-rodada');
+    if (st.estado !== 'iniciado') {
+        el.className = 'chip bg-slate-100 text-slate-600';  el.textContent = 'Aguardando';
+    } else if (st.tempo_restante > 0) {
+        el.className = 'chip bg-green-50 text-green-700';   el.textContent = 'Em andamento';
+    } else {
+        el.className = 'chip bg-red-50 text-red-700';       el.textContent = 'Tempo esgotado';
+    }
+}
 
-        // Update performance chart
+// --- DASHBOARD: 1 request por ciclo ---
+function atualizarTudo() { atualizarDashboard(); }
+
+function atualizarDashboard() {
+    adminFetch('/api/admin/dashboard').then(r => r.json()).then(data => {
+        const finalizou = new Set(data.finalizados.map(a => a.usuario));
+
+        // Ranking
+        document.getElementById('ranking-list').innerHTML = data.ranking.map((lin, i) => {
+            const fim = finalizou.has(lin.usuario);
+            return `
+            <li class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-50">
+                <span class="rank rank-${i + 1}">${i + 1}</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block truncate text-sm font-medium text-slate-800">${escapeHtml(lin.usuario)}</span>
+                    <span class="text-xs ${fim ? 'text-green-600' : 'text-amber-600'}">${fim ? 'Finalizou' : 'Jogando'}${fim && lin.tempo_gasto != null ? ' · ' + fmtTempo(lin.tempo_gasto) : ''}</span>
+                </span>
+                <span class="text-sm font-semibold text-slate-900 tabular">${fmt(lin.pontuacao)}</span>
+            </li>`;
+        }).join('') || '<li class="text-sm text-slate-400 px-2 py-6 text-center">Ninguém pontuou ainda.</li>';
+        atualizarGraficoRanking(data.ranking);
+
+        // Status dos alunos — usa data-* para evitar XSS nos nomes
+        dadosStatusAlunos = { finalizados: data.finalizados, jogando: data.jogando };
+        const linhaAluno = (a, grupo) => {
+            const ac = a.respostas.filter(r => r.acertou).length;
+            return `
+            <li class="flex items-center justify-between gap-3 py-2.5">
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-slate-800 truncate">${escapeHtml(a.usuario)}</p>
+                    <p class="text-xs text-slate-500 tabular">${a.respostas.length} respondidas · ${ac} acertos · ${fmt(a.pontuacao)} pts</p>
+                </div>
+                <button class="btn-link shrink-0"
+                    data-usuario="${escapeHtml(a.usuario)}" data-grupo="${grupo}"
+                    onclick="detalharAluno(this.dataset.usuario,this.dataset.grupo)">Detalhes</button>
+            </li>`;
+        };
+        document.getElementById('finalizados').innerHTML =
+            data.finalizados.map(a => linhaAluno(a, 'finalizados')).join('') ||
+            '<li class="text-sm text-slate-400 py-2.5">Nenhum aluno finalizou.</li>';
+        document.getElementById('jogando').innerHTML =
+            data.jogando.map(a => linhaAluno(a, 'jogando')).join('') ||
+            '<li class="text-sm text-slate-400 py-2.5">Nenhum aluno jogando.</li>';
+
+        totalAlunos = data.jogando.length + data.finalizados.length;
+        document.getElementById('count-jogando').textContent     = data.jogando.length;
+        document.getElementById('count-finalizados').textContent = data.finalizados.length;
+        document.getElementById('count-total').textContent       = totalAlunos;
+
+        const todas = [...data.finalizados, ...data.jogando].flatMap(a => a.respostas);
+        document.getElementById('stat-taxa').textContent = todas.length
+            ? Math.round(todas.filter(r => r.acertou).length / todas.length * 100) + '%' : '—';
+
+        if (data.link_alunos) document.getElementById('link-alunos').textContent = data.link_alunos;
+
         atualizarGraficoPerformance(data.finalizados);
-
-        // Update per-question chart
         atualizarGraficoQuestoes(data.finalizados);
-        
-        // This is needed to refresh modal data if it's open
+
+        // Timer: re-sincroniza do servidor a cada 5 s e conta localmente entre ciclos
+        const st = data.status_jogo;
+        atualizarEstadoRodada(st);
+        if (st.estado === 'iniciado' && st.tempo_restante !== undefined) {
+            startAdminTimer(st.tempo_restante);
+        } else {
+            if (timerAdminLocal) { clearInterval(timerAdminLocal); timerAdminLocal = null; }
+            document.getElementById('timer-rodada').textContent = '--:--';
+            document.getElementById('timer-pill').classList.remove('critico');
+        }
+
         if (detalhesVisivel && detalhesUltimoAluno) {
             detalharAluno(detalhesUltimoAluno, detalhesUltimoGrupo, true);
         }
-    });
+    }).catch(() => { /* falha silenciosa — próximo ciclo tentará */ });
 }
 
+// --- DETALHES DO ALUNO ---
 function detalharAluno(nome, grupo, manter) {
-    const aluno = dadosStatusAlunos[grupo]?.find(a => a.usuario === nome);
+    // O aluno pode ter mudado de "jogando" para "finalizados" desde o clique
+    const aluno = dadosStatusAlunos[grupo]?.find(a => a.usuario === nome)
+        || [...(dadosStatusAlunos.finalizados || []), ...(dadosStatusAlunos.jogando || [])].find(a => a.usuario === nome);
     if (!aluno) return;
 
-    detalhesVisivel = true;
+    detalhesVisivel     = true;
     detalhesUltimoAluno = nome;
     detalhesUltimoGrupo = grupo;
 
-    let html = `<div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-bold">Respostas de ${aluno.usuario}</h4>
-                    <button class="text-gray-500 hover:text-gray-800" onclick="fecharDetalhes()">✖</button>
-                </div>
-                <p class="mb-4 text-sm">Status: <span class="font-semibold">${aluno.status}</span> | Pontuação: <span class="font-semibold text-blue-600">${aluno.pontuacao}</span></p>`;
+    const ac = aluno.respostas.filter(r => r.acertou).length;
+    let html = `
+        <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-200">
+            <div class="min-w-0">
+                <h3 class="text-lg font-semibold text-slate-900 truncate">${escapeHtml(aluno.usuario)}</h3>
+                <p class="text-sm text-slate-500 mt-0.5">
+                    ${aluno.status === 'finalizado' ? 'Finalizou' : 'Jogando'}
+                    · ${ac} de ${aluno.respostas.length} acertos
+                    · <span class="font-semibold text-slate-900">${fmt(aluno.pontuacao)} pts</span>
+                    ${aluno.tempo_gasto != null ? ' · ' + fmtTempo(aluno.tempo_gasto) : ''}
+                </p>
+            </div>
+            <button class="icon-btn" onclick="fecharDetalhes()" aria-label="Fechar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="px-6 py-5">`;
 
-    if (aluno.respostas.length === 0) {
-        html += "<i class='text-gray-500'>Nenhuma resposta registrada ainda.</i>";
+    if (!aluno.respostas.length) {
+        html += '<p class="text-sm text-slate-400 py-6 text-center">Nenhuma resposta registrada ainda.</p>';
     } else {
-        html += `<div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border text-sm">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="py-2 px-3 border-b text-left">#</th>
-                                <th class="py-2 px-3 border-b text-left">ID</th>
-                                <th class="py-2 px-3 border-b text-center">Acertou?</th>
-                                <th class="py-2 px-3 border-b text-right">Tempo (s)</th>
-                                <th class="py-2 px-3 border-b text-right">Base</th>
-                                <th class="py-2 px-3 border-b text-right">Bônus</th>
-                                <th class="py-2 px-3 border-b text-right font-bold">Pts</th>
-                                <th class="py-2 px-3 border-b text-left">Resposta</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+        html += `<div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="tabela w-full text-sm">
+                <thead class="bg-slate-50"><tr>
+                    <th>#</th><th>Questão</th><th>Resultado</th>
+                    <th class="text-right">Tempo</th><th class="text-right">Base</th>
+                    <th class="text-right">Bônus</th><th class="text-right">Pontos</th><th>Resposta</th>
+                </tr></thead><tbody>`;
         aluno.respostas.forEach((r, idx) => {
-            const pts = r.pontos_ganhos !== undefined ? r.pontos_ganhos : '—';
-            const base = r.pontos_base !== undefined ? r.pontos_base : '—';
-            const bonus = r.pontos_bonus !== undefined ? r.pontos_bonus : '—';
-            const tempo = r.tempo_resposta !== undefined ? r.tempo_resposta + 's' : '—';
-            html += `<tr class="hover:bg-gray-50">
-                        <td class="py-2 px-3 border-b">${idx+1}</td>
-                        <td class="py-2 px-3 border-b">${r.id}</td>
-                        <td class="py-2 px-3 border-b text-xl text-center">${r.acertou ? '✅' : '❌'}</td>
-                        <td class="py-2 px-3 border-b text-right font-mono">${tempo}</td>
-                        <td class="py-2 px-3 border-b text-right text-slate-500">${base}</td>
-                        <td class="py-2 px-3 border-b text-right text-blue-500">${bonus}</td>
-                        <td class="py-2 px-3 border-b text-right font-bold text-green-600">${pts}</td>
-                        <td class="py-2 px-3 border-b font-mono text-xs">${typeof r.resposta === 'object' ? JSON.stringify(r.resposta) : r.resposta}</td>
-                     </tr>`;
+            const resp = Array.isArray(r.resposta) ? `${r.resposta.length} pares`
+                : typeof r.resposta === 'number' ? (LETTERS[r.resposta] || r.resposta)
+                : String(r.resposta ?? '');
+            html += `<tr>
+                <td class="text-slate-400">${idx + 1}</td>
+                <td class="text-slate-600">Q${r.id}</td>
+                <td>${r.acertou
+                    ? '<span class="chip bg-green-50 text-green-700">Certo</span>'
+                    : '<span class="chip bg-red-50 text-red-700">Errado</span>'}</td>
+                <td class="text-right font-mono tabular text-slate-600">${r.tempo_resposta !== undefined ? r.tempo_resposta + 's' : '—'}</td>
+                <td class="text-right tabular text-slate-500">${r.pontos_base ?? '—'}</td>
+                <td class="text-right tabular text-slate-500">${r.pontos_bonus ?? '—'}</td>
+                <td class="text-right tabular font-semibold text-slate-900">${r.pontos_ganhos ?? '—'}</td>
+                <td class="font-mono text-xs text-slate-600">${escapeHtml(resp)}</td>
+            </tr>`;
         });
-        html += `</tbody></table></div>`;
+        html += '</tbody></table></div>';
     }
-    html += `<div class="mt-6 text-right"><button class="btn btn-neutral" onclick="fecharDetalhes()">Fechar</button></div>`;
-    
+    html += '</div>';
+
     document.getElementById('detalhesAluno').innerHTML = html;
     document.getElementById('modal-overlay').style.display = 'block';
     document.getElementById('modal-content').style.display = 'block';
 }
 
 function fecharDetalhes() {
-    detalhesVisivel = false;
+    detalhesVisivel     = false;
     detalhesUltimoAluno = null;
     detalhesUltimoGrupo = null;
     document.getElementById('modal-overlay').style.display = 'none';
     document.getElementById('modal-content').style.display = 'none';
 }
 
-// --- DASHBOARD/CHART FUNCTIONS ---
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && detalhesVisivel) fecharDetalhes(); });
 
+// --- GRÁFICOS ---
 function inicializarDashboard() {
-    // Initialize Ranking Chart
-    const rtx = document.getElementById('rankingChart').getContext('2d');
-    rankingChart = new Chart(rtx, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Pontuação', data: [], backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }] },
-        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
-    });
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.borderColor = '#eef2f7';
 
-    // Initialize Per-question Chart
-    const qtx = document.getElementById('questaoChart').getContext('2d');
-    questaoChart = new Chart(qtx, {
+    rankingChart = new Chart(document.getElementById('rankingChart'), {
         type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: '% Acertos',
-                data: [],
-                backgroundColor: [],
-                borderColor: [],
-                borderWidth: 1
-            }]
-        },
+        data: { labels: [], datasets: [{ label: 'Pontos', data: [], backgroundColor: COR.brand, borderRadius: 6, maxBarThickness: 26 }] },
         options: {
-            responsive: true,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } },
-            scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true }, y: { grid: { display: false } } }
         }
     });
 
-    // Initialize Performance Chart
-    const ptx = document.getElementById('performanceChart').getContext('2d');
-    performanceChart = new Chart(ptx, {
+    questaoChart = new Chart(document.getElementById('questaoChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: '% de acerto', data: [], backgroundColor: [], borderRadius: 6, maxBarThickness: 40 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } },
+            scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } }
+        }
+    });
+
+    performanceChart = new Chart(document.getElementById('performanceChart'), {
         type: 'doughnut',
         data: {
             labels: ['Acertos', 'Erros'],
-            datasets: [{
-                data: [0, 0],
-                backgroundColor: ['rgba(22, 163, 74, 0.8)', 'rgba(239, 68, 68, 0.8)'],
-                borderColor: ['rgba(22, 163, 74, 1)', 'rgba(239, 68, 68, 1)'],
-                borderWidth: 1
-            }]
+            datasets: [{ data: [0, 0], backgroundColor: [COR.ok, COR.erro], borderWidth: 0 }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '68%',
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } }
+        }
     });
 }
 
 function atualizarGraficoRanking(rankingData) {
     if (!rankingChart) return;
-    const top5 = rankingData.slice(0, 5).reverse(); // reverse for correct order in horizontal bar
+    const top5 = rankingData.slice(0, 5);
     rankingChart.data.labels = top5.map(p => p.usuario);
     rankingChart.data.datasets[0].data = top5.map(p => p.pontuacao);
     rankingChart.update();
@@ -431,105 +526,52 @@ function atualizarGraficoRanking(rankingData) {
 
 function atualizarGraficoPerformance(finalizadosData) {
     if (!performanceChart) return;
-    let totalAcertos = 0;
-    let totalErros = 0;
-    finalizadosData.forEach(aluno => {
-        aluno.respostas.forEach(resp => {
-            if (resp.acertou) totalAcertos++;
-            else totalErros++;
-        });
-    });
-    
-    performanceChart.data.datasets[0].data = [totalAcertos, totalErros];
+    let acertos = 0, erros = 0;
+    finalizadosData.forEach(aluno => aluno.respostas.forEach(r => { if (r.acertou) acertos++; else erros++; }));
+    performanceChart.data.datasets[0].data = [acertos, erros];
     performanceChart.update();
 }
 
 function atualizarGraficoQuestoes(finalizadosData) {
     if (!questaoChart) return;
-    const emptyMsg = document.getElementById('questao-chart-empty');
+    const vazio = !finalizadosData.length;
+    document.getElementById('questao-chart-empty').style.display = vazio ? 'block' : 'none';
+    document.getElementById('questao-chart-wrap').style.display  = vazio ? 'none' : 'block';
+    if (vazio) return;
 
-    if (finalizadosData.length === 0) {
-        questaoChart.data.labels = [];
-        questaoChart.data.datasets[0].data = [];
-        questaoChart.update();
-        if (emptyMsg) emptyMsg.style.display = 'block';
-        return;
-    }
-    if (emptyMsg) emptyMsg.style.display = 'none';
-
-    // Agrega acertos por questão
     const stats = {};
-    finalizadosData.forEach(aluno => {
-        (aluno.respostas || []).forEach(r => {
-            if (!stats[r.id]) stats[r.id] = { acertos: 0, total: 0 };
-            stats[r.id].total++;
-            if (r.acertou) stats[r.id].acertos++;
-        });
-    });
-
+    finalizadosData.forEach(aluno => (aluno.respostas || []).forEach(r => {
+        if (!stats[r.id]) stats[r.id] = { acertos: 0, total: 0 };
+        stats[r.id].total++;
+        if (r.acertou) stats[r.id].acertos++;
+    }));
     const ids  = Object.keys(stats).sort((a, b) => Number(a) - Number(b));
     const pcts = ids.map(id => Math.round((stats[id].acertos / stats[id].total) * 100));
-    const bg   = pcts.map(p => p >= 70 ? 'rgba(22,163,74,0.75)' : p >= 40 ? 'rgba(234,179,8,0.75)' : 'rgba(239,68,68,0.75)');
-    const border = pcts.map(p => p >= 70 ? 'rgba(22,163,74,1)' : p >= 40 ? 'rgba(202,138,4,1)' : 'rgba(220,38,38,1)');
-
-    questaoChart.data.labels                          = ids.map(id => 'Q' + id);
-    questaoChart.data.datasets[0].data                = pcts;
-    questaoChart.data.datasets[0].backgroundColor     = bg;
-    questaoChart.data.datasets[0].borderColor          = border;
+    questaoChart.data.labels = ids.map(id => 'Q' + id);
+    questaoChart.data.datasets[0].data            = pcts;
+    questaoChart.data.datasets[0].backgroundColor = pcts.map(p => p >= 70 ? COR.ok : p >= 40 ? COR.amarelo : COR.vermelho);
     questaoChart.update();
 }
 
-function atualizarTimerRodada() {
-    fetch('/api/status_jogo').then(r=>r.json()).then(st=>{
-        const timerEl = document.getElementById('timer-rodada');
-        if (st.estado === "iniciado" && st.tempo_restante !== undefined) {
-            let t = st.tempo_restante > 0 ? st.tempo_restante : 0;
-            let min = String(Math.floor(t / 60)).padStart(2, '0');
-            let sec = String(t % 60).padStart(2, '0');
-            timerEl.innerText = `${min}:${sec}`;
-            
-            // Change color when time is low
-            if (t <= 60 && t > 0) {
-                timerEl.classList.add('text-red-500');
-                timerEl.classList.remove('text-blue-600');
-            } else {
-                timerEl.classList.add('text-blue-600');
-                timerEl.classList.remove('text-red-500');
-            }
-        } else {
-            timerEl.innerText = "--:--";
-            timerEl.classList.add('text-blue-600');
-            timerEl.classList.remove('text-red-500');
-        }
-    });
-}
-
+// --- EXPORTAR CSV ---
 function exportarCSV() {
     adminFetch('/api/admin/exportar')
-        .then(r => {
-            if (!r.ok) { showToast('Erro ao exportar.'); return null; }
-            return r.blob();
-        })
+        .then(r => { if (!r.ok) { showToast('Erro ao exportar.'); return null; } return r.blob(); })
         .then(blob => {
             if (!blob) return;
             const url  = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href     = url;
-            link.download = 'resultado_flashcards.csv';
-            link.click();
+            link.href = url; link.download = 'resultado_flashcards.csv'; link.click();
             URL.revokeObjectURL(url);
         });
 }
 
-// Utility for showing a temporary message
 function showToast(message) {
     const toast = document.createElement('div');
     toast.textContent = message;
-    toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+    toast.className   = 'fixed bottom-5 right-5 bg-slate-900 text-white text-sm font-medium py-2.5 px-4 rounded-lg shadow-lg z-50 fade-in';
     document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
 }
 </script>
 </body>

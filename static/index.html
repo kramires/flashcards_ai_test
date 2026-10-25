@@ -3,191 +3,306 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo de Flashcards — IA</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="theme-color" content="#4f46e5">
+  <title>Flashcards IA</title>
+  <!-- CSS pré-compilado e local: carrega rápido e funciona sem internet -->
+  <link rel="stylesheet" href="/vendor/tailwind.css">
+  <link rel="stylesheet" href="/estilo.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+    /* Barra de progresso */
+    .progress { height: 6px; background: #eef2f7; border-radius: 999px; overflow: hidden; }
+    #progress-bar { height: 100%; width: 0; background: var(--brand); border-radius: 999px; transition: width .5s ease; }
 
-    .btn { transition: all 0.2s ease-in-out; }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-
-    /* Opções de múltipla escolha */
+    /* Alternativas */
     .opcao-btn {
-      transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; gap: .875rem;
+      width: 100%; text-align: left;
+      padding: .8rem .9rem;
+      border: 1.5px solid var(--line); border-radius: 12px; background: #fff;
+      transition: border-color .15s, background-color .15s, opacity .2s;
     }
-    .opcao-btn:not(:disabled):hover {
-      background-color: #3b82f6;
-      border-color: #2563eb;
-      color: white;
+    .opcao-btn:focus-visible { outline: 3px solid #c7d2fe; outline-offset: 2px; }
+    .opcao-btn:disabled { cursor: default; }
+    .letra {
+      flex: none; width: 2rem; height: 2rem; border-radius: 8px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: .8rem;
+      background: #f1f5f9; color: #475569;
+      transition: background-color .15s, color .15s;
     }
-    .opcao-btn:disabled { cursor: not-allowed; opacity: 0.85; }
-
-    /* Destaque após responder */
-    .opcao-btn.correta {
-      background-color: #22c55e !important;
-      border-color: #16a34a !important;
-      color: white !important;
-      font-weight: 700;
+    .marca { flex: none; width: 1.25rem; height: 1.25rem; }
+    @media (hover: hover) {
+      .opcao-btn:not(:disabled):hover { border-color: #a5b4fc; background: #f8f9ff; }
+      .opcao-btn:not(:disabled):hover .letra { background: var(--brand); color: #fff; }
     }
-    .opcao-btn.errada {
-      background-color: #ef4444 !important;
-      border-color: #dc2626 !important;
-      color: white !important;
+    .opcao-btn.correta { border-color: var(--ok); background: #f0fdf4; }
+    .opcao-btn.correta .letra { background: var(--ok); color: #fff; }
+    .opcao-btn.correta .marca { color: var(--ok); }
+    .opcao-btn.errada { border-color: var(--err); background: #fef2f2; }
+    .opcao-btn.errada .letra { background: var(--err); color: #fff; }
+    .opcao-btn.errada .marca { color: var(--err); }
+    .opcao-btn.apagada { opacity: .5; }
+
+    /* Associação (toque em termo → toque em conceito) */
+    .assoc-item {
+      display: flex; align-items: center; gap: .5rem;
+      width: 100%; text-align: left;
+      padding: .65rem .75rem;
+      border: 1.5px solid var(--line); border-radius: 10px; background: #fff;
+      font-size: .85rem; line-height: 1.3; color: #1e293b;
+      transition: border-color .15s, background-color .15s, box-shadow .15s;
     }
+    .assoc-item:disabled { cursor: default; }
+    @media (hover: hover) { .assoc-item:not(:disabled):hover { border-color: #a5b4fc; } }
+    .assoc-item.selecionado { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 3px #e0e7ff; }
+    .assoc-item.pareado { border-color: #c7d2fe; background: #f8f9ff; }
+    .par-num {
+      display: none; flex: none; place-items: center;
+      width: 1.35rem; height: 1.35rem; border-radius: 50%;
+      background: var(--brand); color: #fff; font-size: .7rem; font-weight: 700;
+    }
+    .assoc-item.pareado .par-num { display: grid; }
+    .assoc-item.correta { border-color: var(--ok); background: #f0fdf4; }
+    .assoc-item.correta .par-num { background: var(--ok); }
+    .assoc-item.errada { border-color: var(--err); background: #fef2f2; }
+    .assoc-item.errada .par-num { background: var(--err); }
 
-    /* Timer pulsante nos últimos 60s */
-    .timer-critico { color: #dc2626 !important; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+    /* Feedback após responder */
+    .feedback { gap: .75rem; align-items: flex-start; padding: .9rem 1rem; border-radius: 12px; border: 1px solid; }
+    .fb-icon { width: 1.75rem; height: 1.75rem; flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+    .feedback.ok    { background: #f0fdf4; border-color: #bbf7d0; }
+    .feedback.ok .fb-icon { background: var(--ok); }
+    .feedback.ok #resultado { color: #166534; }
+    .feedback.erro  { background: #fef2f2; border-color: #fecaca; }
+    .feedback.erro .fb-icon { background: var(--err); }
+    .feedback.erro #resultado { color: #991b1b; }
+    .feedback.aviso { background: #fffbeb; border-color: #fde68a; }
+    .feedback.aviso .fb-icon { background: var(--warn); }
+    .feedback.aviso #resultado { color: #92400e; }
 
-    .fade-in { animation: fadeIn 0.4s ease-in-out; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    /* Rosca de acertos em CSS puro */
+    .donut {
+      width: 96px; height: 96px; flex: none; border-radius: 50%;
+      background: #e2e8f0; position: relative;
+      display: grid; place-items: center;
+      transition: background .4s;
+    }
+    .donut::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: #fff; }
+    #donut-pct { position: relative; font-weight: 700; font-size: 1rem; color: var(--ink); }
 
-    /* Animação de transição entre perguntas */
-    @keyframes slideInRight { from{opacity:0;transform:translateX(28px)} to{opacity:1;transform:translateX(0)} }
-    .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.22,0.61,0.36,1) both; }
+    /* Transição entre questões */
+    #card-pergunta { transition: opacity .18s ease, transform .18s ease; }
+    #card-pergunta.saindo { opacity: 0; transform: translateX(-16px); }
+    #card-pergunta.entrando { animation: entrar .28s cubic-bezier(.22, .61, .36, 1) both; }
+    @keyframes entrar { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 
     /* Gabarito */
-    .gab-card { border-radius: 0.5rem; padding: 0.75rem 1rem; border-width: 1px; }
-    .gab-acertou { background-color: #f0fdf4; border-color: #86efac; }
-    .gab-errou   { background-color: #fef2f2; border-color: #fca5a5; }
+    .gab-icon { width: 1.5rem; height: 1.5rem; flex: none; border-radius: 50%; display: grid; place-items: center; margin-top: .1rem; }
+    .gab-icon.ok   { background: #dcfce7; color: #15803d; }
+    .gab-icon.erro { background: #fee2e2; color: #b91c1c; }
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="min-h-screen">
 
-<div id="main-container" class="w-full max-w-4xl mx-auto">
+<!-- Coluna flex: telas com my-auto (espera e início) ficam centralizadas na vertical -->
+<main class="w-full max-w-5xl mx-auto px-4 py-6 sm:py-10 min-h-screen flex flex-col">
 
   <!-- Tela de espera -->
-  <div id="aguarde" class="text-center bg-white p-10 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <div class="text-6xl mb-4">🤖</div>
-    <h2 class="text-2xl font-bold text-slate-800 mb-3">Aguardando o instrutor…</h2>
-    <p class="text-slate-500 mb-8">O jogo será liberado em instantes. Fique atento!</p>
-    <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mx-auto"></div>
-  </div>
+  <section id="aguarde" class="card w-full max-w-md mx-auto my-auto p-8 text-center fade-in" style="display:none;">
+    <div class="logo logo-lg mx-auto mb-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.17a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 9.17 4.17a2 2 0 0 0 1.66 0L22 17"/></svg>
+    </div>
+    <h1 class="text-xl font-semibold text-slate-900">Aguardando o professor</h1>
+    <p class="text-sm text-slate-500 mt-2 leading-relaxed">A rodada ainda não foi liberada. Esta tela atualiza sozinha, não é preciso recarregar.</p>
+    <div class="spinner mx-auto mt-7"></div>
+  </section>
 
   <!-- Tela de início -->
-  <div id="inicio" class="bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <div class="text-center mb-6">
-      <div class="text-5xl mb-3">🧠</div>
-      <h2 class="text-3xl font-bold text-slate-800">Flashcards — IA</h2>
-      <p class="text-slate-400 mt-1">Quiz gamificado de Inteligência Artificial</p>
-    </div>
-    <div class="space-y-4">
-      <div>
-        <label for="usuario" class="block text-sm font-semibold text-slate-700 mb-1">Seu nome:</label>
-        <input type="text" id="usuario"
-          class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-          placeholder="Digite seu nome aqui" autocomplete="off">
+  <section id="inicio" class="card w-full max-w-md mx-auto my-auto p-6 sm:p-8 fade-in" style="display:none;">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="logo logo-lg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.17a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 9.17 4.17a2 2 0 0 0 1.66 0L22 17"/></svg>
       </div>
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Perguntas na rodada:</label>
-        <input type="number" id="numPerguntas"
-          class="w-full px-4 py-3 border bg-slate-100 border-slate-200 rounded-xl text-lg text-slate-500" disabled>
+        <h1 class="text-xl font-semibold text-slate-900 leading-tight">Flashcards IA</h1>
+        <p class="text-sm text-slate-500">Quiz de Inteligência Artificial</p>
       </div>
     </div>
-    <button class="btn w-full mt-8 bg-blue-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-blue-700"
-      onclick="comecar()">▶ Começar Jogo</button>
-  </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+        <p class="eyebrow">Questões</p>
+        <p id="numPerguntas" class="text-lg font-semibold text-slate-900 mt-0.5 tabular">—</p>
+      </div>
+      <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+        <p class="eyebrow">Tempo da rodada</p>
+        <p id="tempoInfo" class="text-lg font-semibold text-slate-900 mt-0.5 tabular">—</p>
+      </div>
+    </div>
+
+    <label for="usuario" class="label">Seu nome completo</label>
+    <input type="text" id="usuario" class="field" placeholder="Ex.: Maria Souza"
+      autocomplete="off" maxlength="60" enterkeyhint="go"
+      onkeydown="if (event.key === 'Enter') comecar()">
+    <p id="erro-nome" class="text-sm text-red-600 mt-2 hidden"></p>
+
+    <button id="btn-comecar" class="btn btn-primary btn-lg w-full mt-6" onclick="comecar()">Começar</button>
+    <p class="text-xs text-slate-400 text-center mt-4">Respostas rápidas valem pontos de bônus.</p>
+  </section>
 
   <!-- Tela do jogo -->
-  <div id="jogo" class="fade-in" style="display:none;">
+  <section id="jogo" class="w-full" style="display:none;">
 
-    <!-- Header: progresso + timer da rodada -->
-    <div class="bg-white p-4 rounded-2xl shadow-md mb-4 flex flex-col sm:flex-row sm:justify-between items-center gap-3">
-      <div class="w-full sm:w-auto flex-1">
-        <p class="text-sm font-semibold text-slate-500 mb-1 text-center sm:text-left">
-          Pergunta <span id="pergunta-atual" class="text-slate-800"></span>
-          de <span id="total-perguntas" class="text-slate-800"></span>
-        </p>
-        <div class="w-full bg-slate-200 rounded-full h-3">
-          <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out" style="width:0%"></div>
+    <header class="card px-4 py-3 mb-4 flex items-center gap-3 sm:gap-4">
+      <div class="logo hidden sm:grid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.17a2 2 0 0 0 1.66 0L22 12"/><path d="m2 17 9.17 4.17a2 2 0 0 0 1.66 0L22 17"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-baseline justify-between gap-2 mb-1.5">
+          <p class="text-sm font-semibold text-slate-800">
+            Questão <span id="pergunta-atual" class="tabular"></span>
+            <span class="text-slate-400 font-normal">de <span id="total-perguntas"></span></span>
+          </p>
+          <p id="nome-jogador" class="text-xs text-slate-400 truncate hidden sm:block"></p>
         </div>
+        <div class="progress"><div id="progress-bar"></div></div>
       </div>
-      <div class="flex items-center gap-3 shrink-0">
-        <button id="btn-mute" onclick="toggleMute(this)"
-          class="text-slate-400 hover:text-slate-600 text-xl leading-none" title="Mudo/Som">🔊</button>
-        <span class="text-xl">⏰</span>
-        <span id="timer-aluno" class="font-mono text-2xl font-bold text-blue-700 tabular-nums">--:--</span>
+      <button id="btn-mute" class="icon-btn" onclick="toggleMute(this)" title="Desligar som" aria-label="Som"></button>
+      <div id="timer-pill" class="timer-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="timer-aluno">--:--</span>
       </div>
-    </div>
+    </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-      <!-- Área da pergunta -->
-      <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
-
-        <!-- Badge dificuldade + cronômetro da questão -->
-        <div class="flex justify-between items-center mb-4">
-          <span id="badge-dificuldade" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"></span>
-          <span class="font-mono text-sm text-slate-400 flex items-center gap-1">
-            ⚡ <span id="timer-questao">0.0s</span>
-          </span>
+      <!-- Questão -->
+      <article id="card-pergunta" class="card lg:col-span-2 p-5 sm:p-7">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <span id="badge-dificuldade" class="chip"></span>
+            <span id="tipo-questao" class="text-xs text-slate-400 truncate"></span>
+          </div>
+          <span class="text-xs text-slate-400 font-mono tabular" title="Tempo nesta questão"><span id="timer-questao">0.0s</span></span>
         </div>
 
-        <div id="pergunta" class="text-xl font-semibold text-slate-800 mb-6 min-h-[56px] leading-snug"></div>
-        <div id="opcoes" class="space-y-3"></div>
+        <h2 id="pergunta" class="text-lg sm:text-xl font-semibold text-slate-900 leading-snug mb-6"></h2>
+        <div id="opcoes" class="space-y-2.5"></div>
 
-        <!-- Feedback -->
-        <div id="feedback" class="mt-5 text-center" style="display:none;">
-          <p id="resultado" class="text-2xl font-bold"></p>
-          <p id="pontos-feedback" class="text-base font-semibold mt-1"></p>
-          <p id="explicacao" class="text-slate-500 mt-2 text-sm leading-relaxed"></p>
+        <div id="feedback" class="feedback mt-5" style="display:none;">
+          <span id="feedback-icon" class="fb-icon"></span>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <p id="resultado" class="font-semibold"></p>
+              <p id="pontos-feedback" class="text-sm"></p>
+            </div>
+            <p id="explicacao" class="text-sm text-slate-600 mt-1 leading-relaxed"></p>
+          </div>
         </div>
 
-        <button id="proxima"
-          class="btn w-full mt-6 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600"
-          style="display:none" onclick="proxima()">Próxima →</button>
-      </div>
+        <button id="proxima" class="btn btn-primary btn-lg w-full mt-5" style="display:none" onclick="proxima()">Próxima questão</button>
+      </article>
 
       <!-- Painel lateral -->
-      <div class="space-y-4">
-        <div class="bg-white p-5 rounded-2xl shadow-lg">
-          <h3 class="font-bold text-slate-700 mb-3 text-center">Meu Desempenho</h3>
-          <canvas id="performanceChart"></canvas>
-          <p class="text-center mt-3 text-2xl font-bold text-slate-700">
-            <span id="pontuacao-atual">0</span> <span class="text-sm font-normal text-slate-400">pts</span>
+      <aside class="space-y-4">
+        <div class="card p-5">
+          <p class="eyebrow">Sua pontuação</p>
+          <p class="text-3xl font-bold text-slate-900 tabular mt-1">
+            <span id="pontuacao-atual">0</span> <span class="text-base font-medium text-slate-400">pts</span>
           </p>
+          <div class="flex items-center gap-5 mt-5">
+            <div id="performanceChart" class="donut"><span id="donut-pct">—</span></div>
+            <dl class="space-y-2 text-sm">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-green-600"></span>
+                <dt class="text-slate-500">Acertos</dt>
+                <dd id="stat-acertos" class="font-semibold text-slate-900 tabular ml-1">0</dd>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-300"></span>
+                <dt class="text-slate-500">Erros</dt>
+                <dd id="stat-erros" class="font-semibold text-slate-900 tabular ml-1">0</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-        <div class="bg-white p-5 rounded-2xl shadow-lg">
-          <h3 class="font-bold text-slate-700 mb-3 text-center">🏆 Ranking</h3>
-          <ul id="ranking-list" class="space-y-2 text-sm">
-            <li class="text-center text-slate-400">Carregando…</li>
+
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <p class="eyebrow">Ranking</p>
+            <p class="text-xs text-slate-400">Top 5</p>
+          </div>
+          <ul id="ranking-list" class="space-y-1">
+            <li class="text-sm text-slate-400 px-2.5 py-2">Carregando…</li>
           </ul>
+        </div>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- Tela final -->
+  <section id="final" class="w-full max-w-2xl mx-auto fade-in" style="display:none;">
+    <div class="card p-6 sm:p-8">
+      <div class="text-center">
+        <p class="eyebrow">Rodada concluída</p>
+        <p id="final-pontos" class="text-5xl font-bold text-slate-900 tabular mt-3">0</p>
+        <p class="text-sm text-slate-500 mt-1">pontos</p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 mt-7">
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-center">
+          <p id="final-acertos" class="text-2xl font-semibold text-green-700 tabular">0</p>
+          <p class="text-xs text-slate-500 mt-0.5">Acertos</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-center">
+          <p id="final-erros" class="text-2xl font-semibold text-red-600 tabular">0</p>
+          <p class="text-xs text-slate-500 mt-0.5">Erros</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-center">
+          <p id="final-aproveitamento" class="text-2xl font-semibold text-slate-900 tabular">—</p>
+          <p class="text-xs text-slate-500 mt-0.5">de acerto</p>
         </div>
       </div>
 
+      <div id="gabarito" class="mt-8"></div>
+
+      <div class="text-center mt-8">
+        <p class="text-sm text-slate-500">Aguarde o professor liberar uma nova rodada.</p>
+        <button class="btn btn-outline mt-4" onclick="window.location.reload()">Voltar ao início</button>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Tela final -->
-  <div id="final" class="bg-white p-8 rounded-2xl shadow-lg fade-in" style="display:none;">
-    <div class="text-center">
-      <div id="final-emoji" class="text-6xl mb-3"></div>
-      <h2 class="text-3xl font-bold text-slate-800 mb-1">Rodada concluída!</h2>
-      <p id="scoreFinal" class="text-xl text-slate-600 mb-3"></p>
-      <div id="final-stats" class="flex justify-center gap-6 text-sm mb-2"></div>
-    </div>
-
-    <!-- Gabarito -->
-    <div id="gabarito" class="mt-6"></div>
-
-    <p class="text-slate-400 text-center text-sm mt-6">
-      Aguarde o instrutor liberar uma nova rodada para jogar novamente.
-    </p>
-    <button class="btn block w-full max-w-xs mx-auto mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700"
-      onclick="window.location.reload()">Voltar ao Início</button>
-  </div>
-
-</div><!-- /main-container -->
+</main>
 
 <script>
 const API = window.location.origin + '/api';
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString('pt-BR'); }
+
+// Ícones de traço (24×24)
+const ICONES = {
+  check:   '<polyline points="20 6 9 17 4 12"/>',
+  x:       '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  alerta:  '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  relogio: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  som:     '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+  mudo:    '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'
+};
+
+function icone(nome, cls = 'w-5 h-5') {
+  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[nome]}</svg>`;
+}
+
 // Estado do jogo
 let perguntas = [], atual = 0, pontuacao = 0, usuario = '';
 let acertos = 0, erros = 0;
-let performanceChart = null;
 let rankingInterval = null;
 
 // Timer da rodada (local — sem polls a cada segundo)
@@ -206,25 +321,34 @@ let historicoRespostas = [];
 let termoSelecionado = null;
 let paresAssociacao  = {};
 
-// Áudio
+// Áudio — um único AudioContext reaproveitado (criar um por som vaza memória
+// e o navegador para de tocar depois de alguns)
 let audioMutado = false;
+let audioCtx = null;
 
 // Constantes de UI
 const LETTERS = ['A', 'B', 'C', 'D', 'E'];
-const DIFICULDADE_LABEL = { facil: 'Fácil', media: 'Médio', dificil: 'Difícil', muito_dificil: 'Muito Difícil' };
+const DIFICULDADE_LABEL = { facil: 'Fácil', media: 'Médio', dificil: 'Difícil', muito_dificil: 'Muito difícil' };
 const DIFICULDADE_COR   = {
-  facil:        'bg-green-100 text-green-700',
-  media:        'bg-yellow-100 text-yellow-700',
-  dificil:      'bg-orange-100 text-orange-700',
-  muito_dificil:'bg-red-100 text-red-700'
+  facil:         'bg-green-50 text-green-700',
+  media:         'bg-amber-50 text-amber-700',
+  dificil:       'bg-orange-50 text-orange-700',
+  muito_dificil: 'bg-red-50 text-red-700'
 };
+const TELAS = ['aguarde', 'inicio', 'jogo', 'final'];
+
+function mostrarTela(id) {
+  TELAS.forEach(t => document.getElementById(t).style.display = (t === id ? 'block' : 'none'));
+}
 
 // ─── Áudio (Web Audio API, sem dependência externa) ──────────────────────────
 
 function playSound(tipo) {
   if (audioMutado) return;
   try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
 
@@ -257,60 +381,76 @@ function playSound(tipo) {
 
 function toggleMute(btn) {
   audioMutado = !audioMutado;
-  btn.textContent = audioMutado ? '🔇' : '🔊';
+  btn.innerHTML = icone(audioMutado ? 'mudo' : 'som');
+  btn.title = audioMutado ? 'Ligar som' : 'Desligar som';
 }
 
 // ─── Tap-to-match (questões de associação) ───────────────────────────────────
 
+function elTermo(t)    { return document.querySelector(`.assoc-termo[data-termo="${CSS.escape(t)}"]`); }
+function elConceito(c) { return document.querySelector(`.assoc-conceito[data-conceito="${CSS.escape(c)}"]`); }
+
+function marcarPar(el, n) {
+  if (!el) return;
+  el.querySelector('.par-num').textContent = n || '';
+  el.classList.toggle('pareado', !!n);
+}
+
+function desfazerPar(termo) {
+  const conceito = paresAssociacao[termo];
+  delete paresAssociacao[termo];
+  marcarPar(elTermo(termo), null);
+  marcarPar(elConceito(conceito), null);
+}
+
 function selecionarTermo(el, termo) {
-  // Clique num termo já pareado → desfaz o par
-  if (paresAssociacao[termo]) {
-    const concEl = document.querySelector(`.assoc-conceito[data-conceito="${CSS.escape(paresAssociacao[termo])}"]`);
-    if (concEl) {
-      concEl.disabled = false;
-      concEl.className = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm transition-all';
-    }
-    delete paresAssociacao[termo];
-    el.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
+  // Toque num termo já pareado → desfaz o par
+  if (paresAssociacao[termo] !== undefined) {
+    desfazerPar(termo);
     termoSelecionado = null;
     atualizarStatusAssoc();
     return;
   }
-  // Deseleciona o termo anterior (se houver)
-  if (termoSelecionado !== null && termoSelecionado !== termo) {
-    const prev = document.querySelector(`.assoc-termo[data-termo="${CSS.escape(termoSelecionado)}"]`);
-    if (prev && !paresAssociacao[termoSelecionado]) {
-      prev.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
-    }
-  }
+  document.querySelectorAll('.assoc-item.selecionado').forEach(b => b.classList.remove('selecionado'));
   termoSelecionado = termo;
-  el.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-blue-500 bg-blue-50 text-sm font-medium transition-all';
+  el.classList.add('selecionado');
 }
 
 function selecionarConceito(el, conceito) {
-  if (!termoSelecionado || el.disabled) return;
-  // Faz o par
-  paresAssociacao[termoSelecionado] = conceito;
-  const termoEl = document.querySelector(`.assoc-termo[data-termo="${CSS.escape(termoSelecionado)}"]`);
-  if (termoEl) {
-    termoEl.className = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-green-500 bg-green-50 text-sm font-medium transition-all';
+  // Toque num conceito já usado → desfaz o par dele (e reaproveita se houver termo selecionado)
+  const dono = Object.keys(paresAssociacao).find(t => paresAssociacao[t] === conceito);
+  if (dono !== undefined) {
+    desfazerPar(dono);
+    atualizarStatusAssoc();
   }
-  el.disabled  = true;
-  el.className = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-green-500 bg-green-50 text-sm transition-all opacity-80 cursor-not-allowed';
+  if (termoSelecionado === null) return;
+
+  const termoEl = elTermo(termoSelecionado);
+  const n = Number(termoEl.dataset.n);
+  paresAssociacao[termoSelecionado] = conceito;
+  termoEl.classList.remove('selecionado');
+  marcarPar(termoEl, n);
+  marcarPar(el, n);
   termoSelecionado = null;
   atualizarStatusAssoc();
 }
 
 function atualizarStatusAssoc() {
-  const total = document.querySelectorAll('.assoc-termo').length;
-  const feitos = Object.keys(paresAssociacao).length;
-  const statusEl = document.getElementById('assoc-status');
-  if (statusEl) statusEl.innerText = `${feitos} de ${total} associados`;
   const btn = document.getElementById('btn-confirmar-assoc');
   if (!btn) return;
-  const pronto = feitos === total;
-  btn.disabled  = !pronto;
-  btn.className = `btn w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700${pronto ? '' : ' opacity-50 cursor-not-allowed'}`;
+  const total = document.querySelectorAll('.assoc-termo').length;
+  const feitos = Object.keys(paresAssociacao).length;
+  document.getElementById('assoc-status').textContent = `${feitos} de ${total} associados`;
+  btn.disabled = feitos !== total;
+}
+
+function itemAssoc(tipo, texto) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `assoc-item assoc-${tipo}`;
+  btn.innerHTML = '<span class="par-num"></span><span class="flex-1"></span>';
+  btn.lastChild.textContent = texto;
+  return btn;
 }
 
 // ─── Timer da rodada (calculado localmente) ──────────────────────────────────
@@ -324,18 +464,12 @@ function startTimerAluno(tempoInicial) {
 }
 
 function atualizarTimerLocal() {
-  const elapsed  = Math.floor((Date.now() - localGameStart) / 1000);
+  const elapsed   = Math.floor((Date.now() - localGameStart) / 1000);
   const remaining = Math.max(0, initialTimeRemaining - elapsed);
   const min = String(Math.floor(remaining / 60)).padStart(2, '0');
   const sec = String(remaining % 60).padStart(2, '0');
-  const el  = document.getElementById('timer-aluno');
-  if (!el) return;
-  el.innerText = `${min}:${sec}`;
-  if (remaining <= 60 && remaining > 0) {
-    el.className = 'font-mono text-2xl font-bold tabular-nums timer-critico';
-  } else {
-    el.className = 'font-mono text-2xl font-bold text-blue-700 tabular-nums';
-  }
+  document.getElementById('timer-aluno').textContent = `${min}:${sec}`;
+  document.getElementById('timer-pill').classList.toggle('critico', remaining <= 60 && remaining > 0);
   if (remaining <= 0) {
     clearInterval(timerAluno);
     bloquearJogoPorTempo();
@@ -343,12 +477,16 @@ function atualizarTimerLocal() {
 }
 
 function bloquearJogoPorTempo() {
-  document.querySelectorAll('#jogo button, #jogo input, #jogo select').forEach(el => el.disabled = true);
+  document.querySelectorAll('#jogo button').forEach(el => el.disabled = true);
   document.getElementById('opcoes').innerHTML = '';
   document.getElementById('feedback').style.display = 'none';
   document.getElementById('proxima').style.display = 'none';
-  document.getElementById('pergunta').innerHTML =
-    '<p class="text-red-600 text-2xl font-bold text-center py-8">⏰ Tempo Esgotado!</p>';
+  document.getElementById('pergunta').innerHTML = `
+    <div class="flex flex-col items-center text-center py-10">
+      <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 grid place-items-center mb-3">${icone('relogio', 'w-6 h-6')}</div>
+      <p class="text-xl font-semibold text-slate-900">Tempo esgotado</p>
+      <p class="text-sm font-normal text-slate-500 mt-1">Calculando seu resultado…</p>
+    </div>`;
   setTimeout(mostrarFim, 2000);
 }
 
@@ -378,26 +516,45 @@ function verificarStatus() {
     .then(r => r.json())
     .then(st => {
       if (st.estado === 'iniciado') {
-        document.getElementById('aguarde').style.display = 'none';
-        document.getElementById('inicio').style.display  = 'block';
-        document.getElementById('numPerguntas').value    = st.qtd_perguntas;
+        mostrarTela('inicio');
+        document.getElementById('numPerguntas').textContent = st.qtd_perguntas;
+        document.getElementById('tempoInfo').textContent = Math.round(st.tempo_limite / 60) + ' min';
       } else {
-        document.getElementById('inicio').style.display  = 'none';
-        document.getElementById('aguarde').style.display = 'block';
+        mostrarTela('aguarde');
         setTimeout(verificarStatus, 3000);
       }
     })
     .catch(() => setTimeout(verificarStatus, 5000));
 }
 
-window.onload = verificarStatus;
+window.onload = () => {
+  document.getElementById('btn-mute').innerHTML = icone('som');
+  verificarStatus();
+};
+
+function erroInicio(msg) {
+  const el = document.getElementById('erro-nome');
+  el.textContent = msg;
+  el.classList.toggle('hidden', !msg);
+  const btn = document.getElementById('btn-comecar');
+  btn.disabled = false;
+  btn.textContent = 'Começar';
+}
 
 function comecar() {
   usuario = document.getElementById('usuario').value.trim();
-  if (!usuario) { alert('Por favor, digite seu nome para começar!'); return; }
+  if (!usuario) {
+    erroInicio('Digite seu nome para começar.');
+    document.getElementById('usuario').focus();
+    return;
+  }
+  erroInicio('');
+  const btn = document.getElementById('btn-comecar');
+  btn.disabled = true;
+  btn.textContent = 'Carregando…';
 
   // Verifica se já jogou
-  fetch('/api/verifica', {
+  fetch(`${API}/verifica`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: -1, resposta: null, usuario })
@@ -405,53 +562,63 @@ function comecar() {
   .then(r => r.json())
   .then(data => {
     if (data.fim) {
-      alert('Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.');
-      window.location.reload();
+      erroInicio(data.explicacao === 'Tempo esgotado!'
+        ? 'O tempo desta rodada esgotou. Aguarde o professor liberar uma nova.'
+        : (data.explicacao || 'Você já jogou esta rodada.'));
       return;
     }
     // Carrega perguntas e status em paralelo
-    Promise.all([
+    return Promise.all([
       fetch(`${API}/perguntas?usuario=${encodeURIComponent(usuario)}`).then(r => r.json()),
       fetch('/api/status_jogo').then(r => r.json())
     ]).then(([qs, st]) => {
-      if (qs.erro) { alert(qs.erro); window.location.reload(); return; }
+      if (qs.erro) { erroInicio(qs.erro); return; }
       perguntas = qs;
       atual = 0; pontuacao = 0; acertos = 0; erros = 0; historicoRespostas = [];
-      document.getElementById('inicio').style.display = 'none';
-      document.getElementById('jogo').style.display   = 'block';
-      document.getElementById('total-perguntas').innerText = perguntas.length;
+      mostrarTela('jogo');
+      document.getElementById('nome-jogador').textContent = usuario;
+      document.getElementById('total-perguntas').textContent = perguntas.length;
       initPerformanceChart();
       fetchAndUpdateRanking();
       rankingInterval = setInterval(fetchAndUpdateRanking, 10000);
       mostrarPergunta();
       startTimerAluno(st.tempo_restante || 600);
     });
-  });
+  })
+  .catch(() => erroInicio('Não foi possível conectar. Verifique o Wi-Fi e tente de novo.'));
 }
 
 // ─── Lógica de pergunta ───────────────────────────────────────────────────────
 
+function mostrarFeedback(tipo, titulo, pontosHtml) {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback mt-5 ' + tipo;
+  fb.style.display = 'flex';
+  document.getElementById('feedback-icon').innerHTML =
+    icone(tipo === 'ok' ? 'check' : tipo === 'erro' ? 'x' : 'alerta', 'w-4 h-4');
+  document.getElementById('resultado').textContent = titulo;
+  document.getElementById('pontos-feedback').innerHTML = pontosHtml || '';
+}
+
 function mostrarPergunta() {
   if (atual >= perguntas.length) { mostrarFim(); return; }
 
-  // Limpa feedback
-  document.getElementById('resultado').innerText    = '';
-  document.getElementById('pontos-feedback').innerText = '';
-  document.getElementById('explicacao').innerText   = '';
   document.getElementById('feedback').style.display = 'none';
+  document.getElementById('explicacao').textContent = '';
   document.getElementById('proxima').style.display  = 'none';
 
   updateProgressBar();
 
   const q = perguntas[atual];
-  document.getElementById('pergunta-atual').innerText = atual + 1;
+  document.getElementById('pergunta-atual').textContent = atual + 1;
   document.getElementById('pergunta').innerHTML = q.pergunta;
 
-  // Badge dificuldade
   const badge = document.getElementById('badge-dificuldade');
   const dif   = q.dificuldade || 'media';
   badge.textContent = DIFICULDADE_LABEL[dif] || dif;
-  badge.className   = 'text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest ' + (DIFICULDADE_COR[dif] || '');
+  badge.className   = 'chip ' + (DIFICULDADE_COR[dif] || 'bg-slate-100 text-slate-600');
+  document.getElementById('tipo-questao').textContent =
+    q.tipo === 'associacao' ? 'Associação' : 'Múltipla escolha';
 
   iniciarCronometroQuestao();
 
@@ -461,79 +628,69 @@ function mostrarPergunta() {
   if (q.tipo === 'multipla_escolha') {
     q.opcoes.forEach((op, idx) => {
       const btn = document.createElement('button');
-      btn.className = 'opcao-btn btn w-full text-left flex items-center p-4 bg-slate-50 rounded-xl border border-slate-200 gap-3';
+      btn.type = 'button';
+      btn.className = 'opcao-btn';
       btn.dataset.idx = idx;
       btn.innerHTML = `
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-600 font-bold text-sm shrink-0">
-          ${LETTERS[idx]}
-        </span>
-        <span>${op}</span>`;
+        <span class="letra">${LETTERS[idx]}</span>
+        <span class="flex-1 text-[15px] leading-snug text-slate-800">${op}</span>
+        <span class="marca"></span>`;
       btn.onclick = () => responder(idx);
       opcoesDiv.appendChild(btn);
     });
 
   } else if (q.tipo === 'associacao') {
-    const termos   = q.associacoes.map(a => a.termo);
-    const conceitos = [...q.associacoes.map(a => a.conceito)].sort(() => Math.random() - 0.5);
+    const termos    = q.termos;
+    const conceitos = q.conceitos;  // já vêm embaralhados do servidor
     termoSelecionado = null;
     paresAssociacao  = {};
 
     opcoesDiv.innerHTML = `
-      <p class="text-sm font-semibold text-slate-600 mb-3">
-        Toque em um <span class="text-blue-600">Termo</span>, depois em um <span class="text-green-600">Conceito</span>.
-        Toque em um par verde para desfazê-lo.
+      <p class="text-sm text-slate-500 mb-4 leading-relaxed">
+        Toque em um <strong class="text-slate-700">termo</strong> e depois no
+        <strong class="text-slate-700">conceito</strong> correspondente. Toque em um item já associado para desfazer.
       </p>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="space-y-2 text-xs font-bold text-center text-slate-400 pb-1">Termos</div>
-        <div class="space-y-2 text-xs font-bold text-center text-slate-400 pb-1">Conceitos</div>
-        <div class="space-y-2" id="col-termos"></div>
-        <div class="space-y-2" id="col-conceitos"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><p class="eyebrow mb-2">Termos</p><div class="space-y-2" id="col-termos"></div></div>
+        <div><p class="eyebrow mb-2">Conceitos</p><div class="space-y-2" id="col-conceitos"></div></div>
       </div>
-      <p class="text-xs text-slate-400 mt-2 text-center" id="assoc-status">0 de ${termos.length} associados</p>`;
+      <div class="flex items-center justify-between gap-3 mt-5">
+        <p class="text-sm text-slate-500 tabular" id="assoc-status">0 de ${termos.length} associados</p>
+        <button type="button" id="btn-confirmar-assoc" class="btn btn-primary" disabled>Confirmar</button>
+      </div>`;
 
     const colT = document.getElementById('col-termos');
     const colC = document.getElementById('col-conceitos');
 
-    termos.forEach(t => {
-      const btn = document.createElement('button');
-      btn.className  = 'assoc-termo w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-medium transition-all';
-      btn.textContent = t;
+    termos.forEach((t, i) => {
+      const btn = itemAssoc('termo', t);
       btn.dataset.termo = t;
+      btn.dataset.n = i + 1;
       btn.onclick = () => selecionarTermo(btn, t);
       colT.appendChild(btn);
     });
 
     conceitos.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className  = 'assoc-conceito w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm transition-all';
-      btn.textContent = c;
+      const btn = itemAssoc('conceito', c);
       btn.dataset.conceito = c;
       btn.onclick = () => selecionarConceito(btn, c);
       colC.appendChild(btn);
     });
 
-    const btnConfirm = document.createElement('button');
-    btnConfirm.id        = 'btn-confirmar-assoc';
-    btnConfirm.className = 'btn w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 opacity-50 cursor-not-allowed';
-    btnConfirm.innerText = 'Confirmar Associações';
-    btnConfirm.disabled  = true;
-    btnConfirm.onclick   = () => {
+    document.getElementById('btn-confirmar-assoc').onclick = () => {
       const resposta = Object.entries(paresAssociacao).map(([t, c]) => ({ termo: t, conceito: c }));
       responder(resposta);
     };
-    opcoesDiv.appendChild(btnConfirm);
   }
 }
 
 function responder(resposta) {
-  const q            = perguntas[atual];
+  const q              = perguntas[atual];
   const tempo_resposta = getTempoResposta();
   pararCronometroQuestao();
 
   // Desabilita tudo
-  document.querySelectorAll('.opcao-btn').forEach(b => b.disabled = true);
-  const confirmBtn = document.querySelector('#opcoes button:not(.opcao-btn)');
-  if (confirmBtn) confirmBtn.disabled = true;
+  document.querySelectorAll('#opcoes button').forEach(b => b.disabled = true);
 
   fetch(`${API}/verifica`, {
     method: 'POST',
@@ -543,92 +700,91 @@ function responder(resposta) {
   .then(r => r.json())
   .then(data => {
     if (data.fim) {
-      alert('Você já jogou esta rodada. Aguarde o instrutor liberar uma nova rodada.');
+      if (data.explicacao === 'Tempo esgotado!') { bloquearJogoPorTempo(); return; }
+      alert(data.explicacao || 'Você já jogou esta rodada. Aguarde o professor liberar uma nova rodada.');
       window.location.reload();
       return;
     }
 
     playSound(data.correta ? 'acerto' : 'erro');
 
-    // Destaca opções corretas / erradas (múltipla escolha)
+    // Marca certo/errado nas alternativas
     if (q.tipo === 'multipla_escolha') {
       document.querySelectorAll('.opcao-btn').forEach(btn => {
-        const idx = parseInt(btn.dataset.idx);
+        const idx   = Number(btn.dataset.idx);
+        const marca = btn.querySelector('.marca');
         if (idx === data.resposta_correta_display) {
           btn.classList.add('correta');
-          btn.querySelector('span:first-child').className =
-            'inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-300 text-white font-bold text-sm shrink-0';
-        } else if (idx === resposta && !data.correta) {
+          marca.innerHTML = icone('check');
+        } else if (idx === resposta) {
           btn.classList.add('errada');
+          marca.innerHTML = icone('x');
+        } else {
+          btn.classList.add('apagada');
         }
+      });
+    } else if (q.tipo === 'associacao' && Array.isArray(data.resposta_correta_display)) {
+      const gab = Object.fromEntries(data.resposta_correta_display.map(a => [a.termo, a.conceito]));
+      Object.entries(paresAssociacao).forEach(([t, c]) => {
+        const cls = gab[t] === c ? 'correta' : 'errada';
+        elTermo(t)?.classList.add(cls);
+        elConceito(c)?.classList.add(cls);
       });
     }
 
-    // Feedback textual
-    const feedbackEl = document.getElementById('feedback');
-    feedbackEl.style.display = 'block';
-
     if (data.correta) {
-      document.getElementById('resultado').innerHTML = '✅ Correto!';
-      document.getElementById('resultado').className = 'text-2xl font-bold text-green-500';
       acertos++;
-      const pfEl = document.getElementById('pontos-feedback');
-      if (data.pontos_bonus > 0) {
-        pfEl.innerHTML = `<span class="text-green-600">+${data.pontos_ganhos} pts</span>
-          <span class="text-slate-400 text-sm"> (base ${data.pontos_base} + bônus ${data.pontos_bonus})</span>`;
-      } else {
-        pfEl.innerHTML = `<span class="text-green-600">+${data.pontos_ganhos} pts</span>`;
-      }
+      const bonus = data.pontos_bonus > 0
+        ? ` <span class="text-slate-500">· ${data.pontos_base} + ${data.pontos_bonus} de bônus</span>` : '';
+      mostrarFeedback('ok', 'Resposta correta',
+        `<span class="font-semibold text-green-700">+${fmt(data.pontos_ganhos)} pts</span>${bonus}`);
     } else {
-      document.getElementById('resultado').innerHTML = '❌ Errado!';
-      document.getElementById('resultado').className = 'text-2xl font-bold text-red-500';
-      document.getElementById('pontos-feedback').innerText = '';
       erros++;
+      mostrarFeedback('erro', 'Resposta incorreta', '<span class="text-slate-500">0 pts</span>');
     }
 
     document.getElementById('explicacao').innerHTML = data.explicacao || '';
     pontuacao = data.pontuacao;
-    document.getElementById('pontuacao-atual').innerText = pontuacao;
+    document.getElementById('pontuacao-atual').textContent = fmt(pontuacao);
     updatePerformanceChart();
     fetchAndUpdateRanking();
 
     // Guarda no histórico para o gabarito
     historicoRespostas.push({
-      numero:              atual + 1,
-      pergunta:            q.pergunta,
-      tipo:                q.tipo,
-      opcoes:              q.opcoes || null,
-      resposta_usuario:    resposta,
-      resposta_correta:    data.resposta_correta_display,
-      acertou:             data.correta,
-      pontos_ganhos:       data.pontos_ganhos || 0
+      numero:           atual + 1,
+      pergunta:         q.pergunta,
+      tipo:             q.tipo,
+      opcoes:           q.opcoes || null,
+      resposta_usuario: resposta,
+      resposta_correta: data.resposta_correta_display,
+      acertou:          data.correta,
+      pontos_ganhos:    data.pontos_ganhos || 0
     });
 
-    document.getElementById('proxima').innerText =
-      (atual + 1 === perguntas.length) ? 'Ver Resultado →' : 'Próxima →';
-    document.getElementById('proxima').style.display = 'block';
+    const btnProx = document.getElementById('proxima');
+    btnProx.textContent = (atual + 1 === perguntas.length) ? 'Ver resultado' : 'Próxima questão';
+    btnProx.style.display = 'flex';
+  })
+  .catch(() => {
+    // Rede caiu ao enviar resposta — reabilita para o aluno tentar de novo
+    document.querySelectorAll('#opcoes button').forEach(b => b.disabled = false);
+    atualizarStatusAssoc();
+    mostrarFeedback('aviso', 'Falha de conexão', '');
+    document.getElementById('explicacao').textContent = 'Verifique o Wi-Fi e responda novamente.';
   });
 }
 
 function proxima() {
-  const card = document.querySelector('#jogo .lg\\:col-span-2');
-  if (card) {
-    card.style.opacity    = '0';
-    card.style.transform  = 'translateX(-22px)';
-    card.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-    setTimeout(() => {
-      card.style.transition = '';
-      card.style.transform  = '';
-      card.style.opacity    = '';
-      atual++;
-      mostrarPergunta();
-      card.classList.add('slide-in-right');
-      setTimeout(() => card.classList.remove('slide-in-right'), 350);
-    }, 210);
-  } else {
+  const card = document.getElementById('card-pergunta');
+  card.classList.add('saindo');
+  setTimeout(() => {
+    card.classList.remove('saindo');
     atual++;
     mostrarPergunta();
-  }
+    card.classList.add('entrando');
+    setTimeout(() => card.classList.remove('entrando'), 300);
+    if (card.getBoundingClientRect().top < 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 180);
 }
 
 // ─── Tela final + gabarito ────────────────────────────────────────────────────
@@ -638,21 +794,15 @@ function mostrarFim() {
   clearInterval(rankingInterval);
   pararCronometroQuestao();
 
-  document.getElementById('jogo').style.display  = 'none';
-  document.getElementById('final').style.display = 'block';
+  mostrarTela('final');
+  window.scrollTo(0, 0);
 
-  // Emoji conforme desempenho
-  const pct = perguntas.length > 0 ? acertos / perguntas.length : 0;
-  const emoji = pct >= 0.8 ? '🏆' : pct >= 0.6 ? '😄' : pct >= 0.4 ? '😐' : '😔';
-  document.getElementById('final-emoji').innerText = emoji;
-
-  document.getElementById('scoreFinal').innerHTML =
-    `Pontuação: <strong class="text-blue-600">${pontuacao} pts</strong>`;
-
-  document.getElementById('final-stats').innerHTML = `
-    <span class="bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full">✅ ${acertos} acertos</span>
-    <span class="bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full">❌ ${erros} erros</span>
-    <span class="bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full">📋 ${perguntas.length} perguntas</span>`;
+  const total = perguntas.length;
+  document.getElementById('final-pontos').textContent  = fmt(pontuacao);
+  document.getElementById('final-acertos').textContent = acertos;
+  document.getElementById('final-erros').textContent   = erros;
+  document.getElementById('final-aproveitamento').textContent =
+    total ? Math.round((acertos / total) * 100) + '%' : '—';
 
   fetch('/api/finalizar', {
     method: 'POST',
@@ -666,42 +816,30 @@ function mostrarFim() {
 function renderGabarito() {
   if (historicoRespostas.length === 0) return;
 
-  let html = `<div class="border-t border-slate-200 pt-6">
-    <h3 class="text-lg font-bold text-slate-700 mb-4">📋 Gabarito da Rodada</h3>
-    <div class="space-y-3">`;
-
-  historicoRespostas.forEach(h => {
-    const cls   = h.acertou ? 'gab-acertou' : 'gab-errou';
-    const icon  = h.acertou ? '✅' : '❌';
-    let resUsuario = '', resCorreta = '';
-
+  const itens = historicoRespostas.map(h => {
+    let sua = '', correta = '';
     if (h.tipo === 'multipla_escolha' && h.opcoes) {
-      resCorreta = h.opcoes[h.resposta_correta] || '—';
-      resUsuario = h.opcoes[h.resposta_usuario] || '—';
-    } else if (h.tipo === 'associacao') {
-      resCorreta = '(ver ordem correta abaixo)';
-      resUsuario = '';
-    } else {
-      resCorreta = String(h.resposta_correta || '—');
-      resUsuario = String(h.resposta_usuario || '—');
+      correta = h.opcoes[h.resposta_correta] ?? '';
+      sua     = h.opcoes[h.resposta_usuario] ?? '';
+    } else if (h.tipo === 'associacao' && !h.acertou && Array.isArray(h.resposta_correta)) {
+      correta = h.resposta_correta.map(a => `${escapeHtml(a.termo)} → ${escapeHtml(a.conceito)}`).join('<br>');
     }
+    return `
+      <li class="flex gap-3 p-4">
+        <span class="gab-icon ${h.acertou ? 'ok' : 'erro'}">${icone(h.acertou ? 'check' : 'x', 'w-3.5 h-3.5')}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-slate-400">Questão ${h.numero}</p>
+          <p class="text-sm font-medium text-slate-800 leading-snug mt-0.5">${h.pergunta}</p>
+          ${!h.acertou && sua ? `<p class="text-xs text-red-700 mt-2">Sua resposta: ${sua}</p>` : ''}
+          ${correta && !h.acertou ? `<p class="text-xs text-green-700 mt-1 leading-relaxed">Correta: <span class="font-medium">${correta}</span></p>` : ''}
+        </div>
+        <span class="text-sm font-semibold tabular shrink-0 ${h.acertou ? 'text-slate-900' : 'text-slate-300'}">+${fmt(h.pontos_ganhos)}</span>
+      </li>`;
+  }).join('');
 
-    html += `<div class="gab-card ${cls}">
-      <p class="font-semibold text-sm text-slate-800">${icon} <span class="text-slate-500 font-normal">${h.numero}.</span> ${h.pergunta}</p>`;
-
-    if (!h.acertou && resUsuario) {
-      html += `<p class="text-xs mt-1 text-red-600">✗ Sua resposta: <em>${resUsuario}</em></p>`;
-    }
-    if (resCorreta && resCorreta !== '(ver ordem correta abaixo)') {
-      html += `<p class="text-xs mt-0.5 ${h.acertou ? 'text-green-700' : 'text-slate-600'}">
-        ✓ Correta: <strong>${resCorreta}</strong></p>`;
-    }
-    html += `<p class="text-xs mt-1 text-blue-500 font-semibold">+${h.pontos_ganhos} pts</p>
-    </div>`;
-  });
-
-  html += '</div></div>';
-  document.getElementById('gabarito').innerHTML = html;
+  document.getElementById('gabarito').innerHTML = `
+    <h3 class="text-sm font-semibold text-slate-900 mb-3">Gabarito</h3>
+    <ul class="divide-y divide-slate-100 border border-slate-200 rounded-xl">${itens}</ul>`;
 }
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -711,53 +849,38 @@ function updateProgressBar() {
 }
 
 function initPerformanceChart() {
-  const ctx = document.getElementById('performanceChart').getContext('2d');
-  if (performanceChart) performanceChart.destroy();
-  performanceChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Acertos', 'Erros'],
-      datasets: [{ data: [0, 0],
-        backgroundColor: ['rgba(34,197,94,0.85)', 'rgba(239,68,68,0.85)'],
-        borderColor:     ['rgba(22,163,74,1)',    'rgba(220,38,38,1)'],
-        borderWidth: 1 }]
-    },
-    options: { responsive: true, maintainAspectRatio: true,
-      plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true } } }
-  });
+  updatePerformanceChart();
 }
 
 function updatePerformanceChart() {
-  if (performanceChart) {
-    performanceChart.data.datasets[0].data = [acertos, erros];
-    performanceChart.update();
-  }
+  const total = acertos + erros;
+  const pct   = total ? (acertos / total) * 100 : 0;
+  document.getElementById('performanceChart').style.background =
+    total ? `conic-gradient(var(--ok) 0 ${pct}%, #fca5a5 ${pct}% 100%)` : '';
+  document.getElementById('donut-pct').textContent = total ? Math.round(pct) + '%' : '—';
+  document.getElementById('stat-acertos').textContent = acertos;
+  document.getElementById('stat-erros').textContent   = erros;
 }
 
 async function fetchAndUpdateRanking() {
+  const list = document.getElementById('ranking-list');
   try {
-    const data = await fetch('/api/ranking').then(r => r.json());
-    const list = document.getElementById('ranking-list');
+    const data = await fetch('/api/ranking?top=5').then(r => r.json());
     if (!data || data.length === 0) {
-      list.innerHTML = '<li class="text-center text-slate-400">Nenhum jogador ainda.</li>';
+      list.innerHTML = '<li class="text-sm text-slate-400 px-2.5 py-2">Ninguém pontuou ainda.</li>';
       return;
     }
-    const medals = ['🥇', '🥈', '🥉'];
-    list.innerHTML = data
-      .sort((a, b) => b.pontuacao - a.pontuacao)
-      .slice(0, 5)
-      .map((p, i) => `
-        <li class="flex justify-between items-center p-2 rounded-lg ${p.usuario === usuario ? 'bg-blue-50 font-bold' : ''}">
-          <span class="flex items-center gap-2">
-            <span class="w-5 text-center">${medals[i] || '#' + (i+1)}</span>
-            <span class="truncate max-w-[120px]">${p.usuario}</span>
-          </span>
-          <span class="font-semibold text-blue-600 shrink-0">${p.pontuacao}</span>
-        </li>`)
-      .join('');
+    list.innerHTML = data.map((p, i) => {
+      const eu = p.usuario === usuario;
+      return `
+        <li class="flex items-center gap-3 px-2.5 py-2 rounded-lg ${eu ? 'bg-indigo-50' : ''}">
+          <span class="rank rank-${i + 1}">${i + 1}</span>
+          <span class="flex-1 truncate text-sm ${eu ? 'font-semibold text-indigo-900' : 'text-slate-700'}">${escapeHtml(p.usuario)}</span>
+          <span class="text-sm font-semibold tabular text-slate-900">${fmt(p.pontuacao)}</span>
+        </li>`;
+    }).join('');
   } catch {
-    document.getElementById('ranking-list').innerHTML =
-      '<li class="text-center text-red-400">Erro ao carregar.</li>';
+    list.innerHTML = '<li class="text-sm text-slate-400 px-2.5 py-2">Ranking indisponível.</li>';
   }
 }
 </script>

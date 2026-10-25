@@ -24,3 +24,6 @@ __pycache__/
 .vscode/
 .idea/
 *.swp
+
+# Estado da rodada (gerado em tempo de execução)
+dados_rodada.json
