@@ -16,7 +16,22 @@ CORS(app)
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # ─── Autenticação de rotas admin ─────────────────────────────────────────────
-ADMIN_TOKEN = "prof123"   # Altere para uma senha segura
+def carregar_env(caminho):
+    """Lê variáveis no formato CHAVE=valor do arquivo oculto .env (sem sobrescrever o ambiente)."""
+    if not os.path.exists(caminho):
+        return
+    with open(caminho, encoding='utf-8') as f:
+        for linha in f:
+            linha = linha.strip()
+            if not linha or linha.startswith('#') or '=' not in linha:
+                continue
+            chave, valor = linha.split('=', 1)
+            os.environ.setdefault(chave.strip(), valor.strip().strip('"').strip("'"))
+
+carregar_env(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN', '')   # definida no arquivo .env
+if not ADMIN_TOKEN:
+    raise SystemExit("Defina ADMIN_TOKEN no arquivo .env (veja .env.example).")
 MAX_USERNAME_LEN = 60
 
 def requer_token_admin(f):

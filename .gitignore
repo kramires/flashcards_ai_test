@@ -27,3 +27,4 @@ __pycache__/
 
 # Estado da rodada (gerado em tempo de execução)
 dados_rodada.json
+!.env.example

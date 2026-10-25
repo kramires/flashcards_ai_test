@@ -42,17 +42,17 @@ git clone https://github.com/SEU-USUARIO/flashcards-ia.git
 cd flashcards-ia
 ````
 
-2. **Crie o ambiente virtual e ative:**
+2. **Instale o [uv](https://docs.astral.sh/uv/) e crie o ambiente:**
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+brew install uv      # ou: curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync
 ```
 
-3. **Instale as dependências:**
+3. **Defina a senha do professor no arquivo oculto `.env`:**
 
 ```bash
-pip install -r requirements.txt
+cp .env.example .env   # depois edite ADMIN_TOKEN=...
 ```
 
 4. **Coloque suas perguntas no arquivo `questoes.json`**
@@ -61,7 +61,7 @@ pip install -r requirements.txt
 5. **Rode o servidor:**
 
 ```bash
-python app.py
+uv run app.py        # ou dê dois cliques em start.command
 ```
 
 Acesse via navegador:
@@ -74,7 +74,9 @@ Acesse via navegador:
 ```
 flashcards-ia/
 ├── app.py               # Backend Flask
-├── requirements.txt     # Dependências Python
+├── pyproject.toml       # Dependências (uv)
+├── uv.lock              # Versões travadas
+├── .env.example         # Modelo do arquivo de senha (.env)
 ├── questoes.json        # Banco de perguntas
 └── static/
     ├── index.html       # Interface do aluno
@@ -83,7 +85,7 @@ flashcards-ia/
 
 ## Personalização
 
-* Para trocar a senha do professor, altere a constante `SENHA` nos arquivos HTML.
+* Para trocar a senha do professor, altere `ADMIN_TOKEN` no arquivo `.env` (não vai para o Git).
 * Para editar perguntas, use o arquivo `questoes.json`.
 * O visual pode ser customizado facilmente com TailwindCSS.
 
